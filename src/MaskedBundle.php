@@ -18,6 +18,6 @@ final class MaskedBundle extends AbstractBundle
 		ContainerConfigurator $configurator,
 		ContainerBuilder $container,
 	): void {
-		$configurator->import('../config/services.php');
+		$configurator->import(__DIR__ . '/../config/services.php');
 	}
 }
