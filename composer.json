@@ -24,8 +24,12 @@
         "symfony/http-kernel": "^8.1"
     },
     "require-dev": {
+        "monolog/monolog": "^3.6",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^12.5"
+    },
+    "suggest": {
+        "monolog/monolog": "Required to use the Monolog sensitive data processor."
     },
     "autoload": {
         "psr-4": {

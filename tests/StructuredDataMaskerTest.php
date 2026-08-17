@@ -21,6 +21,23 @@ final class StructuredDataMaskerTest extends TestCase
 		);
 	}
 
+	public function testMasksSensitiveIntegerValue(): void
+	{
+		if (PHP_INT_SIZE < 8)
+		{
+			self::markTestSkipped(
+				'This test requires 64-bit PHP integers.',
+			);
+		}
+
+		self::assertSame(
+			str_repeat('█', 16),
+			new StructuredDataMasker()->mask(
+				4111111111111111,
+			),
+		);
+	}
+
 	public function testPreservesNonStringScalarValues(): void
 	{
 		$masker = new StructuredDataMasker();

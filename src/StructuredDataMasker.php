@@ -19,6 +19,22 @@ final readonly class StructuredDataMasker
 			return $this->sensitiveDataMasker->mask($value);
 		}
 
+		if (is_int($value))
+		{
+			$valueAsString = (string)$value;
+
+			$masked = $this->sensitiveDataMasker->mask(
+				$valueAsString,
+			);
+
+			if ($masked !== $valueAsString)
+			{
+				return $masked;
+			}
+
+			return $value;
+		}
+
 		if (!is_array($value))
 		{
 			return $value;
