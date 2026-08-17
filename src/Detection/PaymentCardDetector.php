@@ -7,7 +7,7 @@ namespace Alkin\MaskedBundle\Detection;
 use RuntimeException;
 use UnexpectedValueException;
 
-final class PaymentCardDetector
+final readonly class PaymentCardDetector
 {
 	/*
 	 * Conservative bounds used for automatic free-text detection.
@@ -39,6 +39,12 @@ final class PaymentCardDetector
 	 */
 	private const string SEQUENCE_PATTERN =
 		'~(?<![0-9])[0-9]+(?:(?:[ \t-]|\xC2\xA0)+[0-9]+)*(?![0-9])~';
+
+	public function __construct(
+		private SensitiveDataMatchNormalizer $matchNormalizer =
+		new SensitiveDataMatchNormalizer(),
+	) {
+	}
 
 	/**
 	 * @return list<SensitiveDataMatch>
@@ -87,11 +93,6 @@ final class PaymentCardDetector
 			$sequenceValue = $sequence[0];
 			$sequenceByteOffset = $sequence[1];
 
-			/*
-			 * A full match should always have a non-negative offset. Treat an
-			 * unexpected negative offset as an error instead of silently skipping
-			 * a potentially sensitive sequence.
-			 */
 			if ($sequenceByteOffset < 0)
 			{
 				throw new UnexpectedValueException(
@@ -108,7 +109,7 @@ final class PaymentCardDetector
 			}
 		}
 
-		return $this->mergeOverlappingMatches($matches);
+		return $this->matchNormalizer->normalize($matches);
 	}
 
 	/**
@@ -172,10 +173,6 @@ final class PaymentCardDetector
 			{
 				$endGroup = $digitGroups[$endIndex];
 
-				/*
-				 * Same PREG_OFFSET_CAPTURE tuple shape as above: the matched
-				 * value is at index 0 and its byte offset is at index 1.
-				 */
 				$endGroupValue = $endGroup[0];
 				$endGroupByteOffset = $endGroup[1];
 
@@ -246,11 +243,6 @@ final class PaymentCardDetector
 			return false;
 		}
 
-		/*
-		 * Validation remains defensive even though candidates currently
-		 * originate from a digit-only regex. This keeps the Luhn implementation
-		 * independent from assumptions made by its caller.
-		 */
 		if (strspn($pan, '0123456789') !== $length)
 		{
 			return false;
@@ -304,82 +296,5 @@ final class PaymentCardDetector
 		}
 
 		return $sum % 10 === 0;
-	}
-
-	/**
-	 * @param list<SensitiveDataMatch> $matches
-	 *
-	 * @return list<SensitiveDataMatch>
-	 */
-	private function mergeOverlappingMatches(array $matches): array
-	{
-		if (count($matches) < 2)
-		{
-			return $matches;
-		}
-
-		usort(
-			$matches,
-			static function (
-				SensitiveDataMatch $left,
-				SensitiveDataMatch $right,
-			): int {
-				$offsetComparison =
-					$left->byteOffset <=> $right->byteOffset;
-
-				if ($offsetComparison !== 0)
-				{
-					return $offsetComparison;
-				}
-
-				/*
-				 * For candidates starting at the same byte, process the
-				 * longest range first.
-				 */
-				return $right->byteLength <=> $left->byteLength;
-			},
-		);
-
-		$merged = [];
-
-		foreach ($matches as $match)
-		{
-			$lastIndex = count($merged) - 1;
-
-			if ($lastIndex < 0)
-			{
-				$merged[] = $match;
-
-				continue;
-			}
-
-			$previous = $merged[$lastIndex];
-
-			/*
-			 * Touching ranges are intentionally kept separate. Only true
-			 * overlaps are merged.
-			 */
-			if (
-				$match->byteOffset
-				>= $previous->endByteOffsetExclusive()
-			)
-			{
-				$merged[] = $match;
-
-				continue;
-			}
-
-			$endByteOffsetExclusive = max(
-				$previous->endByteOffsetExclusive(),
-				$match->endByteOffsetExclusive(),
-			);
-
-			$merged[$lastIndex] = new SensitiveDataMatch(
-				byteOffset: $previous->byteOffset,
-				byteLength: $endByteOffsetExclusive - $previous->byteOffset,
-			);
-		}
-
-		return array_values($merged);
 	}
 }
