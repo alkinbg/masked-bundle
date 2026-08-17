@@ -29,7 +29,9 @@ final class ServiceConfigurationTest extends TestCase
 		$extension->load([], $container);
 
 		self::assertSame(
-			[],
+			[
+				'$maskCharacter' => '█',
+			],
 			$container->getDefinition(Redactor::class)->getArguments(),
 		);
 		self::assertSame(
@@ -65,10 +67,6 @@ final class ServiceConfigurationTest extends TestCase
 				->getArguments(),
 		);
 
-		/*
-		 * Bundle services remain private in production. Expose only the
-		 * façade inside this test so the compiled container can retrieve it.
-		 */
 		$container
 			->getDefinition(SensitiveDataMasker::class)
 			->setPublic(true);
@@ -80,6 +78,45 @@ final class ServiceConfigurationTest extends TestCase
 
 		self::assertSame(
 			'Card: ' . str_repeat('█', 16),
+			$masker->mask('Card: 4111111111111111'),
+		);
+	}
+
+	public function testConfiguresCustomMaskCharacter(): void
+	{
+		$container = new ContainerBuilder();
+
+		$extension = new MaskedBundle()->getContainerExtension();
+
+		self::assertNotNull($extension);
+
+		$extension->load(
+			[
+				[
+					'mask_character' => '*',
+				],
+			],
+			$container,
+		);
+
+		self::assertSame(
+			[
+				'$maskCharacter' => '*',
+			],
+			$container->getDefinition(Redactor::class)->getArguments(),
+		);
+
+		$container
+			->getDefinition(SensitiveDataMasker::class)
+			->setPublic(true);
+
+		$container->compile();
+
+		/** @var SensitiveDataMasker $masker */
+		$masker = $container->get(SensitiveDataMasker::class);
+
+		self::assertSame(
+			'Card: ' . str_repeat('*', 16),
 			$masker->mask('Card: 4111111111111111'),
 		);
 	}
