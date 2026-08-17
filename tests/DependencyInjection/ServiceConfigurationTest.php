@@ -7,9 +7,14 @@ namespace Alkin\MaskedBundle\Tests\DependencyInjection;
 use Alkin\MaskedBundle\Detection\PaymentCardDetector;
 use Alkin\MaskedBundle\Detection\SensitiveDataMatchNormalizer;
 use Alkin\MaskedBundle\MaskedBundle;
+use Alkin\MaskedBundle\Monolog\SensitiveDataProcessor;
 use Alkin\MaskedBundle\RangeRedactor;
 use Alkin\MaskedBundle\Redactor;
 use Alkin\MaskedBundle\SensitiveDataMasker;
+use Alkin\MaskedBundle\StructuredDataMasker;
+use DateTimeImmutable;
+use Monolog\Level;
+use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -66,9 +71,43 @@ final class ServiceConfigurationTest extends TestCase
 				->getDefinition(SensitiveDataMasker::class)
 				->getArguments(),
 		);
+		self::assertEquals(
+			[
+				new Reference(SensitiveDataMasker::class),
+			],
+			$container
+				->getDefinition(StructuredDataMasker::class)
+				->getArguments(),
+		);
+
+		self::assertTrue(
+			$container->hasDefinition(SensitiveDataProcessor::class),
+		);
+		self::assertEquals(
+			[
+				new Reference(SensitiveDataMasker::class),
+				new Reference(StructuredDataMasker::class),
+			],
+			$container
+				->getDefinition(SensitiveDataProcessor::class)
+				->getArguments(),
+		);
+		self::assertSame(
+			[
+				[
+
+				],
+			],
+			$container
+				->getDefinition(SensitiveDataProcessor::class)
+				->getTag('monolog.processor'),
+		);
 
 		$container
 			->getDefinition(SensitiveDataMasker::class)
+			->setPublic(true);
+		$container
+			->getDefinition(SensitiveDataProcessor::class)
 			->setPublic(true);
 
 		$container->compile();
@@ -79,6 +118,32 @@ final class ServiceConfigurationTest extends TestCase
 		self::assertSame(
 			'Card: ' . str_repeat('█', 16),
 			$masker->mask('Card: 4111111111111111'),
+		);
+
+		/** @var SensitiveDataProcessor $processor */
+		$processor = $container->get(SensitiveDataProcessor::class);
+
+		$record = $processor(
+			new LogRecord(
+				datetime: new DateTimeImmutable(
+					'2026-08-18T00:00:00+00:00',
+				),
+				channel: 'app',
+				level: Level::Info,
+				message: 'Card 4111111111111111',
+				context: [
+					'card' => '5555555555554444',
+				],
+			),
+		);
+
+		self::assertSame(
+			'Card ' . str_repeat('█', 16),
+			$record->message,
+		);
+		self::assertSame(
+			str_repeat('█', 16),
+			$record->context['card'],
 		);
 	}
 
@@ -109,6 +174,9 @@ final class ServiceConfigurationTest extends TestCase
 		$container
 			->getDefinition(SensitiveDataMasker::class)
 			->setPublic(true);
+		$container
+			->getDefinition(SensitiveDataProcessor::class)
+			->setPublic(true);
 
 		$container->compile();
 
@@ -118,6 +186,32 @@ final class ServiceConfigurationTest extends TestCase
 		self::assertSame(
 			'Card: ' . str_repeat('*', 16),
 			$masker->mask('Card: 4111111111111111'),
+		);
+
+		/** @var SensitiveDataProcessor $processor */
+		$processor = $container->get(SensitiveDataProcessor::class);
+
+		$record = $processor(
+			new LogRecord(
+				datetime: new DateTimeImmutable(
+					'2026-08-18T00:00:00+00:00',
+				),
+				channel: 'app',
+				level: Level::Info,
+				message: 'Card 4111111111111111',
+				context: [
+					'card' => '5555555555554444',
+				],
+			),
+		);
+
+		self::assertSame(
+			'Card ' . str_repeat('*', 16),
+			$record->message,
+		);
+		self::assertSame(
+			str_repeat('*', 16),
+			$record->context['card'],
 		);
 	}
 }
