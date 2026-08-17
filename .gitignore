@@ -1,0 +1,19 @@
+/vendor/
+
+# Composer
+/composer.lock
+
+# PHPUnit
+/.phpunit.cache/
+/.phpunit.result.cache
+
+# PHPStan
+/.phpstan.cache/
+
+# PhpStorm / IDE
+/.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

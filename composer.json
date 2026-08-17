@@ -1,0 +1,47 @@
+{
+    "name": "alkinbg/masked-bundle",
+    "type": "symfony-bundle",
+    "description": "Symfony bundle for automatic sensitive data detection and masking.",
+    "keywords": [
+        "symfony",
+        "security",
+        "masking",
+        "redaction",
+        "sensitive-data",
+        "credit-card"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alkin Fehim"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "ext-mbstring": "*",
+        "symfony/config": "^8.1",
+        "symfony/dependency-injection": "^8.1",
+        "symfony/http-kernel": "^8.1"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^12.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Alkin\\MaskedBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Alkin\\MaskedBundle\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan analyse"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
