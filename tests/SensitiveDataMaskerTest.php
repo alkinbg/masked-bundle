@@ -140,4 +140,26 @@ final class SensitiveDataMaskerTest extends TestCase
             ),
         );
     }
+
+    public function testFailsClosedWhenExplicitSensitiveValueLimitsAreExceeded(): void
+    {
+        $value = 'Do not expose this value.';
+
+        $sensitiveValues = [];
+
+        for ($index = 0; $index < 1001; ++$index) {
+            $sensitiveValues[] = 'secret-'.$index;
+        }
+
+        self::assertSame(
+            str_repeat(
+                '█',
+                strlen($value),
+            ),
+            new SensitiveDataMasker()->mask(
+                $value,
+                $sensitiveValues,
+            ),
+        );
+    }
 }

@@ -215,4 +215,92 @@ final class ExactValueDetectorTest extends TestCase
             $matches[0]->byteLength,
         );
     }
+
+    public function testFailsClosedWhenTooManySensitiveValuesAreSupplied(): void
+    {
+        $sensitiveValues = [];
+
+        for ($index = 0; $index < 1001; ++$index) {
+            $sensitiveValues[] = 'secret-'.$index;
+        }
+
+        $value = 'Nothing sensitive here.';
+
+        $matches = new ExactValueDetector()->detect(
+            $value,
+            $sensitiveValues,
+        );
+
+        self::assertCount(1, $matches);
+        self::assertSame(0, $matches[0]->byteOffset);
+        self::assertSame(
+            strlen($value),
+            $matches[0]->byteLength,
+        );
+    }
+
+    public function testFailsClosedWhenUniqueSensitiveValueBytesExceedBudget(): void
+    {
+        $value = 'Nothing sensitive here.';
+
+        $matches = new ExactValueDetector()->detect(
+            $value,
+            [
+                str_repeat('a', 600 * 1024),
+                str_repeat('b', 600 * 1024),
+            ],
+        );
+
+        self::assertCount(1, $matches);
+        self::assertSame(0, $matches[0]->byteOffset);
+        self::assertSame(
+            strlen($value),
+            $matches[0]->byteLength,
+        );
+    }
+
+    public function testDuplicateSensitiveValuesDoNotConsumeUniqueByteBudget(): void
+    {
+        $sensitiveValue = str_repeat('s', 2048);
+
+        $matches = new ExactValueDetector()->detect(
+            'prefix-'.$sensitiveValue,
+            array_fill(
+                0,
+                1000,
+                $sensitiveValue,
+            ),
+        );
+
+        self::assertCount(1, $matches);
+        self::assertSame(7, $matches[0]->byteOffset);
+        self::assertSame(
+            strlen($sensitiveValue),
+            $matches[0]->byteLength,
+        );
+    }
+
+    public function testFailsClosedWhenAggregateSearchWindowBudgetIsExceeded(): void
+    {
+        $value = str_repeat('x', 1024 * 1024);
+
+        $sensitiveValues = [];
+
+        for ($index = 0; $index < 65; ++$index) {
+            $sensitiveValues[] =
+                'non-matching-secret-'.$index;
+        }
+
+        $matches = new ExactValueDetector()->detect(
+            $value,
+            $sensitiveValues,
+        );
+
+        self::assertCount(1, $matches);
+        self::assertSame(0, $matches[0]->byteOffset);
+        self::assertSame(
+            strlen($value),
+            $matches[0]->byteLength,
+        );
+    }
 }

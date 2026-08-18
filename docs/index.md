@@ -134,6 +134,11 @@ Exact-value detection uses a bounded search budget for pathological inputs. If
 the budget is exhausted before scanning completes, the complete input is
 treated as sensitive rather than returning a partially scanned value.
 
+Explicit-value detection accepts at most 1,000 supplied values and at most
+1 MiB of unique sensitive-value data per operation. Aggregate substring-search
+windows are limited to 64 MiB. If any of these limits is exceeded, the complete
+input is treated as sensitive.
+
 ## Structured data
 
 `Masked\Bundle\StructuredDataMasker` recursively masks supported scalar values
