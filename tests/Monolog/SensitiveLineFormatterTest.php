@@ -8,6 +8,7 @@ use Alkin\MaskedBundle\Monolog\SensitiveLineFormatter;
 use Alkin\MaskedBundle\RangeRedactor;
 use Alkin\MaskedBundle\Redactor;
 use Alkin\MaskedBundle\SensitiveDataMasker;
+use Alkin\MaskedBundle\StructuredDataMasker;
 use DateTimeImmutable;
 use Monolog\Level;
 use Monolog\LogRecord;
@@ -173,7 +174,9 @@ final class SensitiveLineFormatterTest extends TestCase
 		);
 
 		return new SensitiveLineFormatter(
-			sensitiveDataMasker: $sensitiveDataMasker,
+			structuredDataMasker: new StructuredDataMasker(
+				$sensitiveDataMasker,
+			),
 			includeStacktraces: $includeStacktraces,
 		);
 	}
