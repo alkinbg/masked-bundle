@@ -16,7 +16,7 @@ text.
 
 ## Requirements
 
-- PHP 8.4 or newer
+- PHP 8.4.1 or newer
 - Symfony 8.1 or newer
 - `ext-mbstring`
 
