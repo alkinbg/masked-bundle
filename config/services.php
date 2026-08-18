@@ -7,6 +7,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Alkin\MaskedBundle\Detection\ExactValueDetector;
 use Alkin\MaskedBundle\Detection\PaymentCardDetector;
 use Alkin\MaskedBundle\Detection\SensitiveDataMatchNormalizer;
+use Alkin\MaskedBundle\Logging\SensitiveLogger;
 use Alkin\MaskedBundle\Monolog\SensitiveDataProcessor;
 use Alkin\MaskedBundle\Monolog\SensitiveJsonFormatter;
 use Alkin\MaskedBundle\Monolog\SensitiveLineFormatter;
@@ -49,6 +50,12 @@ return static function (ContainerConfigurator $container): void
 	$services->set(StructuredDataMasker::class)
 		->args([
 			service(SensitiveDataMasker::class),
+		]);
+
+	$services->set(SensitiveLogger::class)
+		->args([
+			service(SensitiveDataMasker::class),
+			service(StructuredDataMasker::class),
 		]);
 
 	if (!class_exists(\Monolog\LogRecord::class))
