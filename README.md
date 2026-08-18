@@ -73,6 +73,11 @@ punctuation mark or symbol. Unicode control, format, separator and combining
 mark characters are rejected so masking cannot introduce line breaks, control
 characters or invisible spacing.
 
+For valid UTF-8 values, masking normally keeps the same number of characters.
+If the generated masked value would be identical to the original sensitive
+value, one additional mask character is prefixed. This ensures that a
+non-empty value which was actually redacted is never returned unchanged.
+
 ## Masking strings
 
 `SensitiveDataMasker` is the primary service for masking sensitive data in

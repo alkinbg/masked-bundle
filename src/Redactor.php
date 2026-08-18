@@ -78,22 +78,37 @@ final readonly class Redactor
             0 === $visibleTrailingCharacters
             || $visibleTrailingCharacters >= $length
         ) {
-            return str_repeat(
+            $redacted = str_repeat(
                 $this->maskCharacter,
                 $length,
             );
+        } else {
+            $visible = mb_substr(
+                $value,
+                -$visibleTrailingCharacters,
+                null,
+                self::CHARACTER_ENCODING,
+            );
+
+            $redacted = str_repeat(
+                $this->maskCharacter,
+                $length - $visibleTrailingCharacters,
+            ).$visible;
         }
 
-        $visible = mb_substr(
-            $value,
-            -$visibleTrailingCharacters,
-            null,
-            self::CHARACTER_ENCODING,
-        );
+        /*
+         * A sensitive value may already consist of the configured mask
+         * character, or its masked prefix may already look exactly like the
+         * generated output.
+         *
+         * Never return a non-empty sensitive value byte-for-byte unchanged.
+         * Prefixing one additional mask character keeps the configured
+         * masking style and preserves any explicitly visible trailing part.
+         */
+        if ($redacted === $value) {
+            return $this->maskCharacter.$redacted;
+        }
 
-        return str_repeat(
-            $this->maskCharacter,
-            $length - $visibleTrailingCharacters,
-        ).$visible;
+        return $redacted;
     }
 }

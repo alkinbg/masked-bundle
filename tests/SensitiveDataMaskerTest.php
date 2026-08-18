@@ -125,4 +125,19 @@ final class SensitiveDataMaskerTest extends TestCase
             ),
         );
     }
+
+    public function testExplicitSensitiveValueIsNotLeftUnchangedByMaskCollision(): void
+    {
+        $value = '████';
+
+        self::assertSame(
+            '█████',
+            new SensitiveDataMasker()->mask(
+                $value,
+                sensitiveValues: [
+                    $value,
+                ],
+            ),
+        );
+    }
 }

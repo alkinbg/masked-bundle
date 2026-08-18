@@ -144,6 +144,37 @@ final class RedactorTest extends TestCase
         new Redactor("\xFF");
     }
 
+    public function testChangesValueWhenItAlreadyContainsOnlyMaskCharacters(): void
+    {
+        self::assertSame(
+            '*********',
+            new Redactor('*')->redact(
+                '********',
+            ),
+        );
+    }
+
+    public function testChangesValueWhenDefaultMaskWouldLeaveItUnchanged(): void
+    {
+        self::assertSame(
+            '█████',
+            new Redactor()->redact(
+                '████',
+            ),
+        );
+    }
+
+    public function testPreservesVisibleTrailingCharactersWhenMaskingWouldBeIdentical(): void
+    {
+        self::assertSame(
+            '*****1111',
+            new Redactor('*')->redact(
+                '****1111',
+                4,
+            ),
+        );
+    }
+
     #[DataProvider('unsafeMaskCharacterProvider')]
     public function testRejectsUnsafeMaskCharacter(
         string $maskCharacter,
