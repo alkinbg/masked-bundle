@@ -67,16 +67,22 @@ final class SensitiveParameterTest extends TestCase
             'value',
         ];
 
-        yield 'payment card sequence' => [
+        yield 'payment card sequence input' => [
             PaymentCardDetector::class,
             'detectInSequence',
-            'sequence',
+            'value',
+        ];
+
+        yield 'payment card separator input' => [
+            PaymentCardDetector::class,
+            'supportedSeparatorByteLengthAt',
+            'value',
         ];
 
         yield 'payment card candidate' => [
             PaymentCardDetector::class,
-            'isValidPanCandidate',
-            'candidate',
+            'isValidPan',
+            'pan',
         ];
 
         yield 'payment card repeated digit input' => [

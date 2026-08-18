@@ -11,31 +11,19 @@ final readonly class PaymentCardDetector
      *
      * These values define what this detector scans automatically; they are
      * intentionally not a complete definition of every PAN length permitted
-     * by payment-card standards. Structured sensitive fields can be handled
-     * independently by higher-level masking logic.
+     * by payment-card standards.
      */
     private const int MIN_DETECTABLE_PAN_LENGTH = 13;
+
     private const int MAX_DETECTABLE_PAN_LENGTH = 19;
 
     /**
-     * Matches sequences of ASCII digit groups separated by supported
-     * formatting characters.
+     * Bounds candidate validation work for one input.
      *
-     * [0-9] is used intentionally instead of \d. A PAN consists of ASCII
-     * decimal digits, and keeping this explicit prevents the meaning of the
-     * pattern from changing if Unicode mode is introduced in the future.
-     *
-     * The Unicode modifier is intentionally not used. Detection must keep
-     * working even when the surrounding input contains invalid UTF-8 bytes.
-     *
-     * Supported separators:
-     * - space
-     * - horizontal tab
-     * - hyphen
-     * - UTF-8 non-breaking space
+     * When the limit is exhausted the detector fails closed by marking the
+     * complete input as sensitive.
      */
-    private const string SEQUENCE_PATTERN =
-        '~(?<![0-9])[0-9]+(?:(?:[ \t-]|\xC2\xA0)+[0-9]+)*(?![0-9])~';
+    private const int MAX_CANDIDATE_CHECKS = 10000;
 
     public function __construct(
         private SensitiveDataMatchNormalizer $matchNormalizer =
@@ -44,9 +32,13 @@ final readonly class PaymentCardDetector
     }
 
     /**
-     * @return list<SensitiveDataMatch>
+     * Scans payment-card candidates incrementally.
      *
-     * @throws \RuntimeException when the input cannot be scanned safely
+     * The scanner never materializes every numeric sequence or every digit
+     * group in the input. At most the digit groups required to represent a
+     * 19-digit candidate are retained at any one time.
+     *
+     * @return list<SensitiveDataMatch>
      */
     public function detect(
         #[\SensitiveParameter]
@@ -56,159 +48,250 @@ final readonly class PaymentCardDetector
             return [];
         }
 
-        $result = preg_match_all(
-            self::SEQUENCE_PATTERN,
-            $value,
-            $sequences,
-            PREG_OFFSET_CAPTURE,
-        );
-
-        if (false === $result) {
-            throw new \RuntimeException('Failed to scan input for payment-card candidates: '.preg_last_error_msg());
-        }
-
-        if (0 === $result) {
-            return [];
-        }
-
-        /** @var list<array{0: string, 1: int<-1, max>}> $capturedSequences */
-        $capturedSequences = $sequences[0];
-
+        $valueByteLength = strlen($value);
+        $byteOffset = 0;
+        $candidateChecks = 0;
         $matches = [];
 
-        foreach ($capturedSequences as $sequence) {
-            /*
-             * Keep the PREG_OFFSET_CAPTURE tuple explicit instead of destructuring
-             * it. Index 0 is the matched value and index 1 is its byte offset.
-             * This makes the boundary with the PCRE API visible at the point of use.
-             */
-            $sequenceValue = $sequence[0];
-            $sequenceByteOffset = $sequence[1];
+        while ($byteOffset < $valueByteLength) {
+            if (!$this->isAsciiDigit($value[$byteOffset])) {
+                ++$byteOffset;
 
-            if ($sequenceByteOffset < 0) {
-                throw new \UnexpectedValueException('PCRE returned a negative byte offset for a full sequence match.');
+                continue;
             }
 
-            foreach ($this->detectInSequence($sequenceValue) as $match) {
-                $matches[] = new SensitiveDataMatch(
-                    byteOffset: $sequenceByteOffset + $match->byteOffset,
-                    byteLength: $match->byteLength,
+            $sequenceResult = $this->detectInSequence(
+                $value,
+                $byteOffset,
+                $candidateChecks,
+            );
+
+            if (null === $sequenceResult) {
+                return $this->failClosedMatch(
+                    $valueByteLength,
                 );
             }
+
+            foreach ($sequenceResult['matches'] as $match) {
+                $matches[] = $match;
+            }
+
+            $byteOffset = $sequenceResult['nextByteOffset'];
         }
 
         return $this->matchNormalizer->normalize($matches);
     }
 
     /**
-     * @return list<SensitiveDataMatch>
+     * Scans one maximal sequence of digit groups separated only by supported
+     * formatting characters.
      *
-     * @throws \RuntimeException when the sequence cannot be scanned safely
+     * @return array{
+     *     matches: list<SensitiveDataMatch>,
+     *     nextByteOffset: int
+     * }|null
      */
     private function detectInSequence(
         #[\SensitiveParameter]
-        string $sequence,
-    ): array {
-        // Keep ASCII digit semantics consistent with SEQUENCE_PATTERN.
-        $result = preg_match_all(
-            '~[0-9]+~',
-            $sequence,
-            $groups,
-            PREG_OFFSET_CAPTURE,
-        );
-
-        if (false === $result) {
-            throw new \RuntimeException('Failed to scan a payment-card candidate sequence: '.preg_last_error_msg());
-        }
-
-        if (0 === $result) {
-            return [];
-        }
-
-        /** @var list<array{0: string, 1: int<-1, max>}> $digitGroups */
-        $digitGroups = $groups[0];
-
+        string $value,
+        int $sequenceByteOffset,
+        int &$candidateChecks,
+    ): ?array {
+        $valueByteLength = strlen($value);
+        $byteOffset = $sequenceByteOffset;
         $matches = [];
-        $groupCount = count($digitGroups);
 
-        /*
-         * Index-based loops are intentional here. Detection examines every
-         * contiguous window of digit groups and must be able to stop as soon as
-         * the candidate exceeds the maximum detectable PAN length.
+        /**
+         * Only groups which may participate in a candidate of at most
+         * MAX_DETECTABLE_PAN_LENGTH digits are retained.
+         *
+         * @var list<array{
+         *     byteOffset: int,
+         *     digitCount: int,
+         *     digits: string
+         * }> $windowGroups
          */
-        for ($startIndex = 0; $startIndex < $groupCount; ++$startIndex) {
-            $startGroup = $digitGroups[$startIndex];
-            $startByteOffset = $startGroup[1];
+        $windowGroups = [];
 
-            if ($startByteOffset < 0) {
-                throw new \UnexpectedValueException('PCRE returned a negative byte offset for a full digit-group match.');
+        $windowDigitCount = 0;
+
+        while (true) {
+            $groupByteOffset = $byteOffset;
+
+            while (
+                $byteOffset < $valueByteLength
+                && $this->isAsciiDigit($value[$byteOffset])
+            ) {
+                ++$byteOffset;
             }
 
-            $digitCount = 0;
+            $groupDigitCount =
+                $byteOffset - $groupByteOffset;
 
-            for (
-                $endIndex = $startIndex;
-                $endIndex < $groupCount;
-                ++$endIndex
+            /*
+             * A contiguous digit group longer than the maximum PAN length
+             * cannot contain a candidate starting inside that group.
+             *
+             * Clearing the window also ensures that a long numeric reference
+             * cannot donate trailing digits to a following candidate.
+             */
+            if (
+                $groupDigitCount
+                > self::MAX_DETECTABLE_PAN_LENGTH
             ) {
-                $endGroup = $digitGroups[$endIndex];
+                $windowGroups = [];
+                $windowDigitCount = 0;
+            } else {
+                $groupDigits = substr(
+                    $value,
+                    $groupByteOffset,
+                    $groupDigitCount,
+                );
 
-                $endGroupValue = $endGroup[0];
-                $endGroupByteOffset = $endGroup[1];
+                $windowGroups[] = [
+                    'byteOffset' => $groupByteOffset,
+                    'digitCount' => $groupDigitCount,
+                    'digits' => $groupDigits,
+                ];
 
-                if ($endGroupByteOffset < 0) {
-                    throw new \UnexpectedValueException('PCRE returned a negative byte offset for a full digit-group match.');
+                $windowDigitCount += $groupDigitCount;
+
+                /*
+                 * Candidate starts are only valid at digit-group boundaries.
+                 * Remove complete leading groups until the retained suffix can
+                 * contain at most a 19-digit PAN.
+                 */
+                while (
+                    $windowDigitCount
+                    > self::MAX_DETECTABLE_PAN_LENGTH
+                ) {
+                    $firstGroup = $windowGroups[0] ?? null;
+
+                    if (null === $firstGroup) {
+                        throw new \LogicException('Payment-card digit window must not be empty.');
+                    }
+
+                    $windowDigitCount -=
+                        $firstGroup['digitCount'];
+
+                    array_shift($windowGroups);
                 }
 
-                $endGroupByteLength = strlen($endGroupValue);
-                $digitCount += $endGroupByteLength;
+                /*
+                 * Examine suffixes ending at the current group.
+                 *
+                 * The window contains at most 19 digits, therefore this loop
+                 * has a small fixed upper bound independent of input size.
+                 */
+                $pan = '';
 
-                if ($digitCount > self::MAX_DETECTABLE_PAN_LENGTH) {
+                for (
+                    $groupIndex = count($windowGroups) - 1;
+                    $groupIndex >= 0;
+                    --$groupIndex
+                ) {
+                    $group = $windowGroups[$groupIndex];
+
+                    $pan = $group['digits'].$pan;
+                    $panDigitCount = strlen($pan);
+
+                    if (
+                        $panDigitCount
+                        < self::MIN_DETECTABLE_PAN_LENGTH
+                    ) {
+                        continue;
+                    }
+
+                    if (
+                        $candidateChecks
+                        >= self::MAX_CANDIDATE_CHECKS
+                    ) {
+                        return null;
+                    }
+
+                    ++$candidateChecks;
+
+                    if (!$this->isValidPan($pan)) {
+                        continue;
+                    }
+
+                    $matches[] = new SensitiveDataMatch(
+                        byteOffset: $group['byteOffset'],
+                        byteLength: $byteOffset
+                            - $group['byteOffset'],
+                    );
+                }
+            }
+
+            /*
+             * Consume a run of supported separators. If it is followed by a
+             * digit, the next digit group belongs to the same sequence.
+             */
+            while ($byteOffset < $valueByteLength) {
+                $separatorByteLength =
+                    $this->supportedSeparatorByteLengthAt(
+                        $value,
+                        $byteOffset,
+                    );
+
+                if (0 === $separatorByteLength) {
                     break;
                 }
 
-                if ($digitCount < self::MIN_DETECTABLE_PAN_LENGTH) {
-                    continue;
-                }
+                $byteOffset += $separatorByteLength;
+            }
 
-                $endByteOffsetExclusive =
-                    $endGroupByteOffset + $endGroupByteLength;
-
-                $candidate = substr(
-                    $sequence,
-                    $startByteOffset,
-                    $endByteOffsetExclusive - $startByteOffset,
-                );
-
-                if (!$this->isValidPanCandidate($candidate)) {
-                    continue;
-                }
-
-                $matches[] = new SensitiveDataMatch(
-                    byteOffset: $startByteOffset,
-                    byteLength: $endByteOffsetExclusive - $startByteOffset,
-                );
+            if (
+                $byteOffset >= $valueByteLength
+                || !$this->isAsciiDigit(
+                    $value[$byteOffset],
+                )
+            ) {
+                return [
+                    'matches' => $matches,
+                    'nextByteOffset' => $byteOffset,
+                ];
             }
         }
-
-        return $matches;
     }
 
-    private function isValidPanCandidate(
+    private function supportedSeparatorByteLengthAt(
         #[\SensitiveParameter]
-        string $candidate,
-    ): bool {
-        $pan = str_replace(
-            [
-                ' ',
-                "\t",
-                '-',
-                "\xC2\xA0",
-            ],
-            '',
-            $candidate,
-        );
+        string $value,
+        int $byteOffset,
+    ): int {
+        $byte = $value[$byteOffset];
 
+        if (
+            ' ' === $byte
+            || "\t" === $byte
+            || '-' === $byte
+        ) {
+            return 1;
+        }
+
+        if (
+            "\xC2" === $byte
+            && isset($value[$byteOffset + 1])
+            && "\xA0" === $value[$byteOffset + 1]
+        ) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+    private function isAsciiDigit(string $byte): bool
+    {
+        $ordinal = ord($byte);
+
+        return $ordinal >= 48 && $ordinal <= 57;
+    }
+
+    private function isValidPan(
+        #[\SensitiveParameter]
+        string $pan,
+    ): bool {
         $length = strlen($pan);
 
         if (
@@ -268,5 +351,23 @@ final readonly class PaymentCardDetector
         }
 
         return 0 === $sum % 10;
+    }
+
+    /**
+     * @return list<SensitiveDataMatch>
+     */
+    private function failClosedMatch(
+        int $valueByteLength,
+    ): array {
+        if (0 === $valueByteLength) {
+            return [];
+        }
+
+        return [
+            new SensitiveDataMatch(
+                byteOffset: 0,
+                byteLength: $valueByteLength,
+            ),
+        ];
     }
 }

@@ -134,6 +134,9 @@ static or mutable secret registry.
 
 Automatic detection and explicit sensitive values can be used together in the
 same call.
+Exact-value detection uses a bounded search budget for pathological inputs. If
+the budget is exhausted before scanning completes, the complete input is
+treated as sensitive rather than returning a partially scanned value.
 
 ## Masking structured data
 
@@ -191,6 +194,10 @@ Currently it:
 - rejects candidates consisting of a single repeated digit;
 - supports multiple payment-card numbers in the same string;
 - operates safely when surrounding text contains multibyte characters.
+
+Payment-card candidates are scanned incrementally without materializing all
+numeric sequences or digit groups in memory. Candidate validation is bounded;
+if the safety budget is exhausted, the complete input is treated as sensitive.
 
 The 13–19 digit range is a detector boundary, not a claim that it represents
 every payment-card identifier permitted by every payment-card standard.

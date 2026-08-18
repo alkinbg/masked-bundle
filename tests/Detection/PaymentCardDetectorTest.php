@@ -259,6 +259,80 @@ final class PaymentCardDetectorTest extends TestCase
         );
     }
 
+    public function testDoesNotDetectPanPrefixInsideVeryLongContiguousNumber(): void
+    {
+        $value = str_repeat(
+            '1',
+            100000,
+        );
+
+        self::assertSame(
+            [],
+            new PaymentCardDetector()->detect($value),
+        );
+    }
+
+    public function testDetectsPanAcrossVeryLargeSupportedSeparatorRun(): void
+    {
+        $value =
+            '4111'
+            .str_repeat(' ', 100000)
+            .'1111 1111 1111';
+
+        $matches = new PaymentCardDetector()->detect($value);
+
+        self::assertCount(
+            1,
+            $matches,
+        );
+
+        self::assertSame(
+            0,
+            $matches[0]->byteOffset,
+        );
+
+        self::assertSame(
+            strlen($value),
+            $matches[0]->byteLength,
+        );
+    }
+
+    public function testFailsClosedWhenCandidateCheckBudgetIsExceeded(): void
+    {
+        /*
+         * A long sequence of one-digit groups produces many possible 13–19
+         * digit suffix candidates without requiring a large retained window.
+         *
+         * Once the validation budget is exhausted the whole input must be
+         * treated as sensitive.
+         */
+        $value = implode(
+            ' ',
+            array_fill(
+                0,
+                2000,
+                '1',
+            ),
+        );
+
+        $matches = new PaymentCardDetector()->detect($value);
+
+        self::assertCount(
+            1,
+            $matches,
+        );
+
+        self::assertSame(
+            0,
+            $matches[0]->byteOffset,
+        );
+
+        self::assertSame(
+            strlen($value),
+            $matches[0]->byteLength,
+        );
+    }
+
     /**
      * @param list<SensitiveDataMatch> $matches
      *

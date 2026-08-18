@@ -123,6 +123,9 @@ They exist only for the current masking operation. MaskedBundle does not keep a
 shared mutable or process-wide secret registry.
 
 Automatic detection and explicit values can be combined in the same call.
+Exact-value detection uses a bounded search budget for pathological inputs. If
+the budget is exhausted before scanning completes, the complete input is
+treated as sensitive rather than returning a partially scanned value.
 
 ## Structured data
 
@@ -162,6 +165,10 @@ Candidates:
   between digit groups;
 - must pass the Luhn algorithm;
 - must not consist of one repeated digit.
+
+Payment-card candidates are scanned incrementally without materializing all
+numeric sequences or digit groups in memory. Candidate validation is bounded;
+if the safety budget is exhausted, the complete input is treated as sensitive.
 
 The detector can find multiple payment-card numbers in the same string and is
 safe with multibyte surrounding text.

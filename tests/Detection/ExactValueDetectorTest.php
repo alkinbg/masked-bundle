@@ -140,4 +140,79 @@ final class ExactValueDetectorTest extends TestCase
             [''],
         );
     }
+
+    public function testMergesManyOverlappingOccurrencesWhileScanning(): void
+    {
+        $value = str_repeat('a', 5000);
+        $sensitiveValue = str_repeat('a', 32);
+
+        $matches = new ExactValueDetector()->detect(
+            $value,
+            [$sensitiveValue],
+        );
+
+        self::assertCount(1, $matches);
+
+        self::assertSame(
+            0,
+            $matches[0]->byteOffset,
+        );
+
+        self::assertSame(
+            strlen($value),
+            $matches[0]->byteLength,
+        );
+    }
+
+    public function testDuplicateSensitiveValuesDoNotChangeDetectedRanges(): void
+    {
+        $detector = new ExactValueDetector();
+
+        $expected = $detector->detect(
+            'Token: super-secret',
+            ['super-secret'],
+        );
+
+        $actual = $detector->detect(
+            'Token: super-secret',
+            [
+                'super-secret',
+                'super-secret',
+                'super-secret',
+            ],
+        );
+
+        self::assertEquals(
+            $expected,
+            $actual,
+        );
+    }
+
+    public function testFailsClosedWhenSearchBudgetIsExceeded(): void
+    {
+        /*
+         * One-character matches are adjacent rather than overlapping, so this
+         * deliberately creates more search operations than the detector budget.
+         *
+         * Once the budget is exhausted the complete input must be protected.
+         */
+        $value = str_repeat('x', 10001);
+
+        $matches = new ExactValueDetector()->detect(
+            $value,
+            ['x'],
+        );
+
+        self::assertCount(1, $matches);
+
+        self::assertSame(
+            0,
+            $matches[0]->byteOffset,
+        );
+
+        self::assertSame(
+            strlen($value),
+            $matches[0]->byteLength,
+        );
+    }
 }
