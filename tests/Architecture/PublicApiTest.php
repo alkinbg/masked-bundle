@@ -22,9 +22,10 @@ use PHPUnit\Framework\TestCase;
 
 final class PublicApiTest extends TestCase
 {
-    /**
-     * @param class-string $class
-     */
+	/**
+	 * @param class-string $class
+	 * @throws \ReflectionException
+	 */
     #[DataProvider('internalClassProvider')]
     public function testImplementationClassIsMarkedInternal(
         string $class,
@@ -41,9 +42,10 @@ final class PublicApiTest extends TestCase
         );
     }
 
-    /**
-     * @param class-string $class
-     */
+	/**
+	 * @param class-string $class
+	 * @throws \ReflectionException
+	 */
     #[DataProvider('publicApiClassProvider')]
     public function testPublicApiClassIsNotMarkedInternal(
         string $class,
