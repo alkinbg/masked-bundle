@@ -96,9 +96,16 @@ return static function (ContainerConfigurator $container): void {
         '.masked.sensitive_logger',
     );
 
+    if (!class_exists(\Monolog\Logger::class)) {
+        return;
+    }
+
+    $monologLoggerReflection = new \ReflectionClass(
+        \Monolog\Logger::class,
+    );
+
     if (
-        !class_exists(\Monolog\Logger::class)
-        || 3 !== \Monolog\Logger::API
+        3 !== $monologLoggerReflection->getConstant('API')
     ) {
         return;
     }
