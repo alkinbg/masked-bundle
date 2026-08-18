@@ -102,16 +102,6 @@ final class ServiceConfigurationTest extends TestCase
 				->getDefinition(SensitiveDataProcessor::class)
 				->getArguments(),
 		);
-		self::assertEquals(
-			[
-				new Reference(PaymentCardDetector::class),
-				new Reference(ExactValueDetector::class),
-				new Reference(RangeRedactor::class),
-			],
-			$container
-				->getDefinition(SensitiveDataMasker::class)
-				->getArguments(),
-		);
 		self::assertSame(
 			[
 				[

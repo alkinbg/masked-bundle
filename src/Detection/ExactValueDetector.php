@@ -30,12 +30,10 @@ final readonly class ExactValueDetector
 		string $value,
 		array $sensitiveValues,
 	): array {
-		if ($value === '' || $sensitiveValues === [])
+		if ($sensitiveValues === [])
 		{
 			return [];
 		}
-
-		$matches = [];
 
 		foreach ($sensitiveValues as $sensitiveValue)
 		{
@@ -45,7 +43,17 @@ final readonly class ExactValueDetector
 					'Sensitive values must not contain an empty string.',
 				);
 			}
+		}
 
+		if ($value === '')
+		{
+			return [];
+		}
+
+		$matches = [];
+
+		foreach ($sensitiveValues as $sensitiveValue)
+		{
 			$sensitiveValueByteLength = strlen($sensitiveValue);
 			$searchByteOffset = 0;
 

@@ -128,4 +128,17 @@ final class ExactValueDetectorTest extends TestCase
 			[''],
 		);
 	}
+
+	public function testRejectsEmptySensitiveValueWhenInputIsEmpty(): void
+	{
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(
+			'Sensitive values must not contain an empty string.',
+		);
+
+		new ExactValueDetector()->detect(
+			'',
+			[''],
+		);
+	}
 }
