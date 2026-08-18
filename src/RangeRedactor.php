@@ -7,6 +7,9 @@ namespace Masked\Bundle;
 use Masked\Bundle\Detection\SensitiveDataMatch;
 use Masked\Bundle\Detection\SensitiveDataMatchNormalizer;
 
+/**
+ * @internal
+ */
 final readonly class RangeRedactor
 {
     /**

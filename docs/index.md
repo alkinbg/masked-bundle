@@ -279,6 +279,20 @@ Monolog integration classes are also exposed through class aliases.
 Implementation-level services use private `.masked.*` service IDs and should
 not be treated as application API.
 
+The supported public PHP API consists of:
+
+- `Masked\Bundle\MaskedBundle`
+- `Masked\Bundle\SensitiveDataMasker`
+- `Masked\Bundle\StructuredDataMasker`
+- `Masked\Bundle\Logging\SensitiveLogger`
+- `Masked\Bundle\Monolog\SensitiveDataProcessor`
+- `Masked\Bundle\Monolog\SensitiveLineFormatter`
+- `Masked\Bundle\Monolog\SensitiveJsonFormatter`
+
+Lower-level redaction and detection classes are marked `@internal`. They are
+autoloadable implementation details rather than supported extension points,
+and applications should not depend on their concrete API.
+
 ## Security considerations
 
 MaskedBundle is a defensive redaction component.

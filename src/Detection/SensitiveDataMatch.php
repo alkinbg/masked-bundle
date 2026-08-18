@@ -9,6 +9,8 @@ namespace Masked\Bundle\Detection;
  *
  * Offsets and lengths are expressed in bytes so they can be used safely
  * with offsets returned by PCRE using PREG_OFFSET_CAPTURE.
+ *
+ * @internal
  */
 final readonly class SensitiveDataMatch
 {

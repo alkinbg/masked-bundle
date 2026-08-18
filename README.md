@@ -379,9 +379,14 @@ Masked\Bundle\Monolog\SensitiveLineFormatter
 Masked\Bundle\Monolog\SensitiveJsonFormatter
 ```
 
-Lower-level detection and range-redaction components are part of the bundle
-architecture, but most applications should start with `SensitiveDataMasker`,
-`StructuredDataMasker` or `SensitiveLogger`.
+These classes, together with `Masked\Bundle\MaskedBundle` and the documented
+`masked` configuration, form the supported public API.
+
+Lower-level redaction and detection classes are implementation details and are
+marked `@internal`. They remain autoloadable because the bundle uses them
+internally, but applications should not depend on their constructors, methods
+or concrete class structure. They may change between minor releases when
+needed to evolve the implementation.
 
 ## Security considerations
 

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Masked\Bundle\Detection;
 
+/**
+ * @internal
+ */
 final class SensitiveDataMatchNormalizer
 {
     /**

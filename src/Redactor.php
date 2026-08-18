@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Masked\Bundle;
 
+/**
+ * @internal
+ */
 final readonly class Redactor
 {
     private const string CHARACTER_ENCODING = 'UTF-8';
