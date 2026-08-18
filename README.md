@@ -2,8 +2,7 @@
 
 Sensitive data detection and masking for Symfony applications.
 
-MaskedBundle provides reusable masking services for Symfony applications and optional Monolog integration for sensitive 
-values should be easy to declare and safely removed from diagnostic output.
+MaskedBundle provides reusable masking services for Symfony applications and optional Monolog integration for masking sensitive data in logs and diagnostic output.
 
 The current detector focuses on payment card numbers found in free text.
 
@@ -276,9 +275,10 @@ It is not a port of Fuko\Masked and does not attempt to preserve its API.
 Its architecture and implementation are new, but the original project's
 philosophy remains an important part of its foundation.
 
-My sincere thanks to КТ [Kaloyan K. Tsvetkov](https://github.com/kktsvetkov). for the original idea, for creating Fuko\Masked,
-and, more importantly, for the inspiration that eventually led to this
-project.
+My sincere thanks to КТ
+([Kaloyan K. Tsvetkov](https://github.com/kktsvetkov)) for the original idea, 
+for creating Fuko\Masked, and, more importantly, for the inspiration that 
+eventually led to this project.
 
 ## Development
 
