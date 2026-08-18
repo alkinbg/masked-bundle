@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests\Monolog;
+namespace Masked\Tests\Monolog;
 
-use Alkin\MaskedBundle\Monolog\SensitiveLineFormatter;
-use Alkin\MaskedBundle\RangeRedactor;
-use Alkin\MaskedBundle\Redactor;
-use Alkin\MaskedBundle\SensitiveDataMasker;
+use Masked\Monolog\SensitiveLineFormatter;
+use Masked\RangeRedactor;
+use Masked\Redactor;
+use Masked\SensitiveDataMasker;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversClass;

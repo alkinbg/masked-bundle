@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle;
+namespace Masked;
 
-use Alkin\MaskedBundle\Detection\SensitiveDataMatch;
-use Alkin\MaskedBundle\Detection\SensitiveDataMatchNormalizer;
+use Masked\Detection\SensitiveDataMatch;
+use Masked\Detection\SensitiveDataMatchNormalizer;
 
 final readonly class RangeRedactor
 {

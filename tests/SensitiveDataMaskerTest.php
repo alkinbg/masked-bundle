@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests;
+namespace Masked\Tests;
 
-use Alkin\MaskedBundle\SensitiveDataMasker;
+use Masked\SensitiveDataMasker;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

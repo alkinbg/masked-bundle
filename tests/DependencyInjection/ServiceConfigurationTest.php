@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests\DependencyInjection;
+namespace Masked\Tests\DependencyInjection;
 
-use Alkin\MaskedBundle\Detection\ExactValueDetector;
-use Alkin\MaskedBundle\Detection\PaymentCardDetector;
-use Alkin\MaskedBundle\Detection\SensitiveDataMatchNormalizer;
-use Alkin\MaskedBundle\MaskedBundle;
-use Alkin\MaskedBundle\Monolog\SensitiveDataProcessor;
-use Alkin\MaskedBundle\RangeRedactor;
-use Alkin\MaskedBundle\Redactor;
-use Alkin\MaskedBundle\SensitiveDataMasker;
-use Alkin\MaskedBundle\StructuredDataMasker;
+use Masked\Detection\ExactValueDetector;
+use Masked\Detection\PaymentCardDetector;
+use Masked\Detection\SensitiveDataMatchNormalizer;
+use Masked\MaskedBundle;
+use Masked\Monolog\SensitiveDataProcessor;
+use Masked\RangeRedactor;
+use Masked\Redactor;
+use Masked\SensitiveDataMasker;
+use Masked\StructuredDataMasker;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversNothing;

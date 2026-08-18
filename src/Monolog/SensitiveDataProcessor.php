@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Monolog;
+namespace Masked\Monolog;
 
-use Alkin\MaskedBundle\SensitiveDataMasker;
-use Alkin\MaskedBundle\StructuredDataMasker;
+use Masked\SensitiveDataMasker;
+use Masked\StructuredDataMasker;
 use Monolog\LogRecord;
 
 final readonly class SensitiveDataProcessor

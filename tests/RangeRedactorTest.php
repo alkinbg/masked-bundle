@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests;
+namespace Masked\Tests;
 
-use Alkin\MaskedBundle\Detection\SensitiveDataMatch;
-use Alkin\MaskedBundle\RangeRedactor;
-use Alkin\MaskedBundle\Redactor;
+use Masked\Detection\SensitiveDataMatch;
+use Masked\RangeRedactor;
+use Masked\Redactor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Alkin\MaskedBundle\MaskedBundle;
-use Alkin\MaskedBundle\SensitiveDataMasker;
+use Masked\MaskedBundle;
+use Masked\SensitiveDataMasker;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 require dirname(__DIR__, 2).'/vendor/autoload.php';

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle;
+namespace Masked;
 
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

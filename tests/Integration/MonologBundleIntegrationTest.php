@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests\Integration;
+namespace Masked\Tests\Integration;
 
-use Alkin\MaskedBundle\MaskedBundle;
-use Alkin\MaskedBundle\Monolog\SensitiveJsonFormatter;
-use Alkin\MaskedBundle\Monolog\SensitiveLineFormatter;
+use Masked\MaskedBundle;
+use Masked\Monolog\SensitiveJsonFormatter;
+use Masked\Monolog\SensitiveLineFormatter;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\Attributes\CoversNothing;

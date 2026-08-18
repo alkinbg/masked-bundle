@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests;
+namespace Masked\Tests;
 
-use Alkin\MaskedBundle\MaskedBundle;
-use Alkin\MaskedBundle\Redactor;
+use Masked\MaskedBundle;
+use Masked\Redactor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;

@@ -37,7 +37,7 @@ If the bundle is not registered automatically, add it to
 <?php
 
 return [
-    Alkin\MaskedBundle\MaskedBundle::class => ['all' => true],
+    Masked\MaskedBundle::class => ['all' => true],
 ];
 ```
 
@@ -72,7 +72,7 @@ The mask character must contain exactly one valid UTF-8 character.
 strings.
 
 ```php
-use Alkin\MaskedBundle\SensitiveDataMasker;
+use Masked\SensitiveDataMasker;
 
 final class PaymentService
 {
@@ -137,7 +137,7 @@ same call.
 arrays.
 
 ```php
-use Alkin\MaskedBundle\StructuredDataMasker;
+use Masked\StructuredDataMasker;
 
 $masked = $structuredDataMasker->mask([
     'customer' => [
@@ -196,7 +196,7 @@ It masks the message and structured context before delegating them to any
 PSR-3 logger.
 
 ```php
-use Alkin\MaskedBundle\Logging\SensitiveLogger;
+use Masked\Logging\SensitiveLogger;
 use Psr\Log\LoggerInterface;
 
 final class AuthenticationService
@@ -284,7 +284,7 @@ monolog:
         main:
             type: stream
             path: '%kernel.logs_dir%/%kernel.environment%.log'
-            formatter: 'Alkin\MaskedBundle\Monolog\SensitiveLineFormatter'
+            formatter: 'Masked\Monolog\SensitiveLineFormatter'
 ```
 
 The formatter delegates normalization and line rendering to Monolog and then
@@ -305,7 +305,7 @@ monolog:
         main:
             type: stream
             path: '%kernel.logs_dir%/%kernel.environment%.json'
-            formatter: 'Alkin\MaskedBundle\Monolog\SensitiveJsonFormatter'
+            formatter: 'Masked\Monolog\SensitiveJsonFormatter'
 ```
 
 The formatter masks normalized log data and JSON object representations before
@@ -322,13 +322,13 @@ onto handlers automatically.
 Use:
 
 ```text
-Alkin\MaskedBundle\Monolog\SensitiveLineFormatter
+Masked\Monolog\SensitiveLineFormatter
 ```
 
 for line-oriented output, or:
 
 ```text
-Alkin\MaskedBundle\Monolog\SensitiveJsonFormatter
+Masked\Monolog\SensitiveJsonFormatter
 ```
 
 for JSON output.
@@ -340,17 +340,17 @@ Custom Monolog formatters are not automatically replaced or decorated.
 The main application-level services are:
 
 ```text
-Alkin\MaskedBundle\SensitiveDataMasker
-Alkin\MaskedBundle\StructuredDataMasker
-Alkin\MaskedBundle\Logging\SensitiveLogger
+Masked\SensitiveDataMasker
+Masked\StructuredDataMasker
+Masked\Logging\SensitiveLogger
 ```
 
 Monolog integrations are:
 
 ```text
-Alkin\MaskedBundle\Monolog\SensitiveDataProcessor
-Alkin\MaskedBundle\Monolog\SensitiveLineFormatter
-Alkin\MaskedBundle\Monolog\SensitiveJsonFormatter
+Masked\Monolog\SensitiveDataProcessor
+Masked\Monolog\SensitiveLineFormatter
+Masked\Monolog\SensitiveJsonFormatter
 ```
 
 Lower-level detection and range-redaction components are part of the bundle

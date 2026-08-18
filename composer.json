@@ -44,12 +44,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Alkin\\MaskedBundle\\": "src/"
+            "Masked\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Alkin\\MaskedBundle\\Tests\\": "tests/"
+            "Masked\\Tests\\": "tests/"
         }
     },
     "scripts": {

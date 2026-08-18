@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle;
+namespace Masked;
 
 final readonly class StructuredDataMasker
 {

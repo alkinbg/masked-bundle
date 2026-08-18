@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests\Logging;
+namespace Masked\Tests\Logging;
 
-use Alkin\MaskedBundle\Logging\SensitiveLogger;
-use Alkin\MaskedBundle\RangeRedactor;
-use Alkin\MaskedBundle\Redactor;
-use Alkin\MaskedBundle\SensitiveDataMasker;
-use Alkin\MaskedBundle\StructuredDataMasker;
+use Masked\Logging\SensitiveLogger;
+use Masked\RangeRedactor;
+use Masked\Redactor;
+use Masked\SensitiveDataMasker;
+use Masked\StructuredDataMasker;
 use Monolog\Handler\TestHandler;
 use Monolog\Level;
 use Monolog\Logger;

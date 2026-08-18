@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests\Detection;
+namespace Masked\Tests\Detection;
 
-use Alkin\MaskedBundle\Detection\PaymentCardDetector;
-use Alkin\MaskedBundle\Detection\SensitiveDataMatch;
+use Masked\Detection\PaymentCardDetector;
+use Masked\Detection\SensitiveDataMatch;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Monolog;
+namespace Masked\Monolog;
 
-use Alkin\MaskedBundle\SensitiveDataMasker;
+use Masked\SensitiveDataMasker;
 use Monolog\Formatter\LineFormatter;
 use Monolog\LogRecord;
 

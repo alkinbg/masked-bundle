@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests\Monolog;
+namespace Masked\Tests\Monolog;
 
-use Alkin\MaskedBundle\Monolog\SensitiveJsonFormatter;
-use Alkin\MaskedBundle\Monolog\SensitiveLineFormatter;
-use Alkin\MaskedBundle\SensitiveDataMasker;
-use Alkin\MaskedBundle\StructuredDataMasker;
+use Masked\Monolog\SensitiveJsonFormatter;
+use Masked\Monolog\SensitiveLineFormatter;
+use Masked\SensitiveDataMasker;
+use Masked\StructuredDataMasker;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversClass;

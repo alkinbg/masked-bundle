@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests\Detection;
+namespace Masked\Tests\Detection;
 
-use Alkin\MaskedBundle\Detection\ExactValueDetector;
+use Masked\Detection\ExactValueDetector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

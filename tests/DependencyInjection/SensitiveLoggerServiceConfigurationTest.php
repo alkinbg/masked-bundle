@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Tests\DependencyInjection;
+namespace Masked\Tests\DependencyInjection;
 
-use Alkin\MaskedBundle\Logging\SensitiveLogger;
-use Alkin\MaskedBundle\MaskedBundle;
-use Alkin\MaskedBundle\SensitiveDataMasker;
-use Alkin\MaskedBundle\StructuredDataMasker;
+use Masked\Logging\SensitiveLogger;
+use Masked\MaskedBundle;
+use Masked\SensitiveDataMasker;
+use Masked\StructuredDataMasker;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

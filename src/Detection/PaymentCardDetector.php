@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle\Detection;
+namespace Masked\Detection;
 
 final readonly class PaymentCardDetector
 {

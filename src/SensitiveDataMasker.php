@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Alkin\MaskedBundle;
+namespace Masked;
 
-use Alkin\MaskedBundle\Detection\ExactValueDetector;
-use Alkin\MaskedBundle\Detection\PaymentCardDetector;
+use Masked\Detection\ExactValueDetector;
+use Masked\Detection\PaymentCardDetector;
 
 final readonly class SensitiveDataMasker
 {
