@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Alkin\MaskedBundle\Tests;
 
 use Alkin\MaskedBundle\StructuredDataMasker;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -71,6 +72,39 @@ final class StructuredDataMaskerTest extends TestCase
 		);
 	}
 
+	public function testMasksExplicitSensitiveValuesRecursively(): void
+	{
+		$value = [
+			'password' => 'super-secret',
+			'nested' => [
+				'authorization' => 'Bearer api-token',
+				'description' =>
+					'The value super-secret must not escape.',
+			],
+		];
+
+		self::assertSame(
+			[
+				'password' => str_repeat('█', 12),
+				'nested' => [
+					'authorization' =>
+						'Bearer ' . str_repeat('█', 9),
+					'description' =>
+						'The value '
+						. str_repeat('█', 12)
+						. ' must not escape.',
+				],
+			],
+			new StructuredDataMasker()->mask(
+				$value,
+				sensitiveValues: [
+					'super-secret',
+					'api-token',
+				],
+			),
+		);
+	}
+
 	public function testMasksSensitiveDataInsideStringKeys(): void
 	{
 		$value = [
@@ -82,6 +116,25 @@ final class StructuredDataMaskerTest extends TestCase
 				'card-' . str_repeat('█', 16) => 'failed',
 			],
 			new StructuredDataMasker()->mask($value),
+		);
+	}
+
+	public function testMasksExplicitSensitiveDataInsideStringKeys(): void
+	{
+		$value = [
+			'token-super-secret' => 'value',
+		];
+
+		self::assertSame(
+			[
+				'token-' . str_repeat('█', 12) => 'value',
+			],
+			new StructuredDataMasker()->mask(
+				$value,
+				sensitiveValues: [
+					'super-secret',
+				],
+			),
 		);
 	}
 
@@ -115,11 +168,39 @@ final class StructuredDataMaskerTest extends TestCase
 		);
 	}
 
+	public function testMasksExplicitSensitiveIntegerValue(): void
+	{
+		self::assertSame(
+			'1' . str_repeat('█', 3) . '5',
+			new StructuredDataMasker()->mask(
+				12345,
+				sensitiveValues: [
+					'234',
+				],
+			),
+		);
+	}
+
 	public function testReturnsEmptyArrayUnchanged(): void
 	{
 		self::assertSame(
 			[],
 			new StructuredDataMasker()->mask([]),
+		);
+	}
+
+	public function testRejectsEmptyExplicitSensitiveValueForEmptyArray(): void
+	{
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(
+			'Sensitive values must not contain an empty string.',
+		);
+
+		new StructuredDataMasker()->mask(
+			[],
+			sensitiveValues: [
+				'',
+			],
 		);
 	}
 
@@ -167,6 +248,48 @@ final class StructuredDataMaskerTest extends TestCase
 		self::assertSame(
 			'4111111111111111',
 			$value['card'],
+		);
+	}
+
+	public function testHandlesSelfReferentialArrayWithExplicitSensitiveValue(): void
+	{
+		$value = [
+			'password' => 'super-secret',
+		];
+
+		$value['self'] =& $value;
+
+		$masked = new StructuredDataMasker()->mask(
+			$value,
+			sensitiveValues: [
+				'super-secret',
+			],
+		);
+
+		self::assertIsArray($masked);
+
+		self::assertSame(
+			str_repeat('█', 12),
+			$masked['password'],
+		);
+
+		$self = $masked['self'];
+
+		self::assertIsArray($self);
+
+		self::assertSame(
+			str_repeat('█', 12),
+			$self['password'],
+		);
+
+		self::assertSame(
+			'[recursive array]',
+			$self['self'],
+		);
+
+		self::assertSame(
+			'super-secret',
+			$value['password'],
 		);
 	}
 

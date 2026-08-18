@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Alkin\MaskedBundle;
 
+use InvalidArgumentException;
 use ReflectionReference;
 
 final readonly class StructuredDataMasker
@@ -22,26 +23,39 @@ final readonly class StructuredDataMasker
 	) {
 	}
 
-	public function mask(mixed $value): mixed
-	{
+	/**
+	 * @param list<string> $sensitiveValues
+	 */
+	public function mask(
+		mixed $value,
+		array $sensitiveValues = [],
+	): mixed {
+		$this->validateSensitiveValues($sensitiveValues);
+
 		return $this->maskValue(
 			$value,
+			$sensitiveValues,
 			[],
 			0,
 		);
 	}
 
 	/**
+	 * @param list<string> $sensitiveValues
 	 * @param array<string, true> $activeArrayReferenceIds
 	 */
 	private function maskValue(
 		mixed $value,
+		array $sensitiveValues,
 		array $activeArrayReferenceIds,
 		int $arrayDepth,
 	): mixed {
 		if (is_string($value))
 		{
-			return $this->sensitiveDataMasker->mask($value);
+			return $this->sensitiveDataMasker->mask(
+				$value,
+				$sensitiveValues,
+			);
 		}
 
 		if (is_int($value))
@@ -50,6 +64,7 @@ final readonly class StructuredDataMasker
 
 			$masked = $this->sensitiveDataMasker->mask(
 				$valueAsString,
+				$sensitiveValues,
 			);
 
 			if ($masked !== $valueAsString)
@@ -72,6 +87,7 @@ final readonly class StructuredDataMasker
 
 		return $this->maskArray(
 			$value,
+			$sensitiveValues,
 			$activeArrayReferenceIds,
 			$arrayDepth,
 		);
@@ -79,12 +95,14 @@ final readonly class StructuredDataMasker
 
 	/**
 	 * @param array<int|string, mixed> $value
+	 * @param list<string> $sensitiveValues
 	 * @param array<string, true> $activeArrayReferenceIds
 	 *
 	 * @return array<int|string, mixed>
 	 */
 	private function maskArray(
 		array $value,
+		array $sensitiveValues,
 		array $activeArrayReferenceIds,
 		int $arrayDepth,
 	): array {
@@ -92,7 +110,10 @@ final readonly class StructuredDataMasker
 
 		foreach ($value as $key => $item)
 		{
-			$maskedKey = $this->maskArrayKey($key);
+			$maskedKey = $this->maskArrayKey(
+				$key,
+				$sensitiveValues,
+			);
 
 			$maskedKey = $this->ensureUniqueArrayKey(
 				$maskedKey,
@@ -126,6 +147,7 @@ final readonly class StructuredDataMasker
 
 					$masked[$maskedKey] = $this->maskValue(
 						$item,
+						$sensitiveValues,
 						$nestedActiveArrayReferenceIds,
 						$arrayDepth + 1,
 					);
@@ -136,6 +158,7 @@ final readonly class StructuredDataMasker
 
 			$masked[$maskedKey] = $this->maskValue(
 				$item,
+				$sensitiveValues,
 				$activeArrayReferenceIds,
 				$arrayDepth + 1,
 			);
@@ -144,12 +167,18 @@ final readonly class StructuredDataMasker
 		return $masked;
 	}
 
-	private function maskArrayKey(int|string $key): int|string
-	{
+	/**
+	 * @param list<string> $sensitiveValues
+	 */
+	private function maskArrayKey(
+		int|string $key,
+		array $sensitiveValues,
+	): int|string {
 		$keyAsString = (string)$key;
 
 		$maskedKey = $this->sensitiveDataMasker->mask(
 			$keyAsString,
+			$sensitiveValues,
 		);
 
 		if ($maskedKey === $keyAsString)
@@ -182,5 +211,22 @@ final readonly class StructuredDataMasker
 		} while (array_key_exists($candidate, $masked));
 
 		return $candidate;
+	}
+
+	/**
+	 * @param list<string> $sensitiveValues
+	 */
+	private function validateSensitiveValues(
+		array $sensitiveValues,
+	): void {
+		foreach ($sensitiveValues as $sensitiveValue)
+		{
+			if ($sensitiveValue === '')
+			{
+				throw new InvalidArgumentException(
+					'Sensitive values must not contain an empty string.',
+				);
+			}
+		}
 	}
 }
