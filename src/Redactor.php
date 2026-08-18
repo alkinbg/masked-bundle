@@ -8,19 +8,32 @@ use InvalidArgumentException;
 
 final readonly class Redactor
 {
+	private const string CHARACTER_ENCODING = 'UTF-8';
+
 	public function __construct(
 		private string $maskCharacter = '█',
 	) {
-		if (mb_strlen($this->maskCharacter) !== 1)
+		if (
+			!mb_check_encoding(
+				$this->maskCharacter,
+				self::CHARACTER_ENCODING,
+			)
+			|| mb_strlen(
+				$this->maskCharacter,
+				self::CHARACTER_ENCODING,
+			) !== 1
+		)
 		{
 			throw new InvalidArgumentException(
-				'The mask character must contain exactly one character.',
+				'The mask character must contain exactly one valid UTF-8 character.',
 			);
 		}
 	}
 
-	public function redact(string $value, int $visibleTrailingCharacters = 0): string
-	{
+	public function redact(
+		string $value,
+		int $visibleTrailingCharacters = 0,
+	): string {
 		if ($visibleTrailingCharacters < 0)
 		{
 			throw new InvalidArgumentException(
@@ -33,7 +46,24 @@ final readonly class Redactor
 			return '';
 		}
 
-		$length = mb_strlen($value);
+		if (!mb_check_encoding($value, self::CHARACTER_ENCODING))
+		{
+			/*
+			 * Character boundaries are undefined for malformed UTF-8.
+			 * Mask the complete byte sequence instead of exposing a
+			 * trailing portion that could start inside an invalid
+			 * multibyte sequence.
+			 */
+			return str_repeat(
+				$this->maskCharacter,
+				strlen($value),
+			);
+		}
+
+		$length = mb_strlen(
+			$value,
+			self::CHARACTER_ENCODING,
+		);
 
 		/*
 		 * If the requested visible part is equal to or longer than the
@@ -44,10 +74,18 @@ final readonly class Redactor
 			|| $visibleTrailingCharacters >= $length
 		)
 		{
-			return str_repeat($this->maskCharacter, $length);
+			return str_repeat(
+				$this->maskCharacter,
+				$length,
+			);
 		}
 
-		$visible = mb_substr($value, -$visibleTrailingCharacters);
+		$visible = mb_substr(
+			$value,
+			-$visibleTrailingCharacters,
+			null,
+			self::CHARACTER_ENCODING,
+		);
 
 		return str_repeat(
 				$this->maskCharacter,
