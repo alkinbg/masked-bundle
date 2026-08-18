@@ -60,7 +60,10 @@ masked:
     mask_character: '*'
 ```
 
-The value must contain exactly one valid UTF-8 character.
+The value must contain exactly one valid UTF-8 letter, number, punctuation
+mark or symbol. Unicode control, format, separator and combining mark
+characters are rejected so masking cannot introduce line breaks, control
+characters or invisible spacing.
 
 ## Masking strings
 

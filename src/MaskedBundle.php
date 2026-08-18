@@ -11,6 +11,9 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 final class MaskedBundle extends AbstractBundle
 {
+    private const string MASK_CHARACTER_PATTERN =
+        '~\A[\p{L}\p{N}\p{P}\p{S}]\z~u';
+
     public function configure(DefinitionConfigurator $definition): void
     {
         $definition->rootNode()
@@ -20,10 +23,14 @@ final class MaskedBundle extends AbstractBundle
             ->validate()
             ->ifTrue(
                 static fn (string $value): bool => !mb_check_encoding($value, 'UTF-8')
-                    || 1 !== mb_strlen($value, 'UTF-8'),
+                    || 1 !== mb_strlen($value, 'UTF-8')
+                    || 1 !== preg_match(
+                        self::MASK_CHARACTER_PATTERN,
+                        $value,
+                    ),
             )
             ->thenInvalid(
-                'The "mask_character" option must contain exactly one valid UTF-8 character.',
+                'The "mask_character" option must contain exactly one valid UTF-8 character from the letter, number, punctuation, or symbol categories.',
             )
             ->end()
             ->end()
@@ -44,6 +51,9 @@ final class MaskedBundle extends AbstractBundle
 
         $configurator->services()
             ->get('.masked.redactor')
-            ->arg('$maskCharacter', $config['mask_character']);
+            ->arg(
+                '$maskCharacter',
+                $config['mask_character'],
+            );
     }
 }

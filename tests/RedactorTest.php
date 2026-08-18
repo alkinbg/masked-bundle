@@ -6,6 +6,7 @@ namespace Masked\Bundle\Tests;
 
 use Masked\Bundle\Redactor;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Redactor::class)]
@@ -48,6 +49,14 @@ final class RedactorTest extends TestCase
         self::assertSame(
             '************1111',
             $redactor->redact('4111111111111111', 4),
+        );
+    }
+
+    public function testSupportsUnicodeSymbolMaskCharacter(): void
+    {
+        self::assertSame(
+            '🔒🔒🔒🔒',
+            new Redactor('🔒')->redact('test'),
         );
     }
 
@@ -129,9 +138,74 @@ final class RedactorTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            'The mask character must contain exactly one valid UTF-8 character.',
+            'exactly one valid UTF-8 character',
         );
 
         new Redactor("\xFF");
+    }
+
+    #[DataProvider('unsafeMaskCharacterProvider')]
+    public function testRejectsUnsafeMaskCharacter(
+        string $maskCharacter,
+    ): void {
+        $this->expectException(
+            \InvalidArgumentException::class,
+        );
+
+        $this->expectExceptionMessage(
+            'letter, number, punctuation, or symbol categories',
+        );
+
+        new Redactor($maskCharacter);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function unsafeMaskCharacterProvider(): iterable
+    {
+        yield 'line feed' => [
+            "\n",
+        ];
+
+        yield 'carriage return' => [
+            "\r",
+        ];
+
+        yield 'horizontal tab' => [
+            "\t",
+        ];
+
+        yield 'null byte' => [
+            "\0",
+        ];
+
+        yield 'escape' => [
+            "\x1B",
+        ];
+
+        yield 'space' => [
+            ' ',
+        ];
+
+        yield 'non-breaking space' => [
+            "\u{00A0}",
+        ];
+
+        yield 'zero-width space' => [
+            "\u{200B}",
+        ];
+
+        yield 'line separator' => [
+            "\u{2028}",
+        ];
+
+        yield 'paragraph separator' => [
+            "\u{2029}",
+        ];
+
+        yield 'combining acute accent' => [
+            "\u{0301}",
+        ];
     }
 }

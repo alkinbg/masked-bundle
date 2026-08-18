@@ -8,6 +8,16 @@ final readonly class Redactor
 {
     private const string CHARACTER_ENCODING = 'UTF-8';
 
+    /**
+     * Mask characters must be standalone characters suitable for textual
+     * output. Letters, numbers, punctuation and symbols are allowed.
+     *
+     * Unicode control, format, separator and combining-mark characters are
+     * intentionally rejected.
+     */
+    private const string MASK_CHARACTER_PATTERN =
+        '~\A[\p{L}\p{N}\p{P}\p{S}]\z~u';
+
     public function __construct(
         private string $maskCharacter = '█',
     ) {
@@ -20,8 +30,12 @@ final readonly class Redactor
                 $this->maskCharacter,
                 self::CHARACTER_ENCODING,
             )
+            || 1 !== preg_match(
+                self::MASK_CHARACTER_PATTERN,
+                $this->maskCharacter,
+            )
         ) {
-            throw new \InvalidArgumentException('The mask character must contain exactly one valid UTF-8 character.');
+            throw new \InvalidArgumentException('The mask character must contain exactly one valid UTF-8 character from the letter, number, punctuation, or symbol categories.');
         }
     }
 
