@@ -430,12 +430,9 @@ final class StructuredDataMaskerTest extends TestCase
             $masked[1000],
         );
 
-        self::assertFalse(
-            in_array(
-                '4111111111111111',
-                $masked,
-                true,
-            ),
+        self::assertNotContains(
+	        '4111111111111111',
+	        $masked
         );
     }
 
