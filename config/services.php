@@ -7,6 +7,8 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 use Alkin\MaskedBundle\Detection\PaymentCardDetector;
 use Alkin\MaskedBundle\Detection\SensitiveDataMatchNormalizer;
 use Alkin\MaskedBundle\Monolog\SensitiveDataProcessor;
+use Alkin\MaskedBundle\Monolog\SensitiveJsonFormatter;
+use Alkin\MaskedBundle\Monolog\SensitiveLineFormatter;
 use Alkin\MaskedBundle\RangeRedactor;
 use Alkin\MaskedBundle\Redactor;
 use Alkin\MaskedBundle\SensitiveDataMasker;
@@ -46,6 +48,16 @@ return static function (ContainerConfigurator $container): void
 	{
 		return;
 	}
+
+	$services->set(SensitiveLineFormatter::class)
+		->args([
+			service(SensitiveDataMasker::class),
+		]);
+
+	$services->set(SensitiveJsonFormatter::class)
+		->args([
+			service(StructuredDataMasker::class),
+		]);
 
 	$services->set(SensitiveDataProcessor::class)
 		->args([
