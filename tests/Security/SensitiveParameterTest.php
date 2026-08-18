@@ -205,21 +205,27 @@ final class SensitiveParameterTest extends TestCase
             'data',
         ];
 
+        yield 'normalized JSON tree data' => [
+            SensitiveJsonFormatter::class,
+            'maskNormalizedTree',
+            'data',
+        ];
+
         yield 'JSON representation data' => [
             SensitiveJsonFormatter::class,
-            'normalizeJsonRepresentation',
+            'maskJsonRepresentation',
             'data',
         ];
 
-        yield 'decoded JSON data' => [
+        yield 'JSON object data' => [
             SensitiveJsonFormatter::class,
-            'maskDecodedJson',
+            'maskJsonObject',
             'data',
         ];
 
-        yield 'normalized JSON data' => [
+        yield 'JSON scalar or array data' => [
             SensitiveJsonFormatter::class,
-            'maskNormalized',
+            'maskScalarOrArray',
             'data',
         ];
     }

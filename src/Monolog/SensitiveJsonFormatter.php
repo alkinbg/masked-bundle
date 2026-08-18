@@ -35,16 +35,57 @@ final class SensitiveJsonFormatter extends JsonFormatter
         mixed $data,
         int $depth = 0,
     ): mixed {
-        $normalized = parent::normalize(
-            $data,
-            $depth,
+        return $this->maskNormalizedTree(
+            parent::normalize(
+                $data,
+                $depth,
+            ),
         );
+    }
 
-        if (is_object($normalized)) {
-            return $this->normalizeJsonRepresentation($normalized);
+    /**
+     * Masks the complete normalized JSON tree.
+     *
+     * Monolog may leave objects inside values returned by
+     * JsonSerializable::jsonSerialize(). Those objects must be normalized
+     * and masked before the final JSON document is encoded.
+     *
+     * @return scalar|array<mixed, mixed>|\stdClass|null
+     *
+     * @throws \JsonException
+     */
+    private function maskNormalizedTree(
+        #[\SensitiveParameter]
+        mixed $data,
+    ): mixed {
+        if ($data instanceof \stdClass) {
+            return $this->maskJsonObject($data);
         }
 
-        return $this->maskNormalized($normalized);
+        if (is_object($data)) {
+            return $this->maskJsonRepresentation($data);
+        }
+
+        if (is_array($data)) {
+            $normalized = [];
+
+            foreach ($data as $key => $value) {
+                $normalized[$key] = $this->maskNormalizedTree(
+                    $value,
+                );
+            }
+
+            return $this->maskScalarOrArray($normalized);
+        }
+
+        if (
+            null !== $data
+            && !is_scalar($data)
+        ) {
+            throw new \LogicException('Normalized JSON data must contain only objects, arrays, scalars, or null.');
+        }
+
+        return $this->maskScalarOrArray($data);
     }
 
     /**
@@ -52,7 +93,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
      *
      * @throws \JsonException
      */
-    private function normalizeJsonRepresentation(
+    private function maskJsonRepresentation(
         #[\SensitiveParameter]
         object $data,
     ): mixed {
@@ -63,52 +104,33 @@ final class SensitiveJsonFormatter extends JsonFormatter
             JSON_THROW_ON_ERROR,
         );
 
-        return $this->maskDecodedJson($decoded);
+        return $this->maskNormalizedTree($decoded);
     }
 
     /**
-     * @return scalar|array<mixed, mixed>|\stdClass|null
+     * @throws \JsonException
      */
-    private function maskDecodedJson(
+    private function maskJsonObject(
         #[\SensitiveParameter]
-        mixed $data,
-    ): mixed {
-        if ($data instanceof \stdClass) {
-            $properties = [];
+        \stdClass $data,
+    ): \stdClass {
+        $properties = [];
 
-            foreach (get_object_vars($data) as $key => $value) {
-                $properties[$key] = $this->maskDecodedJson($value);
-            }
-
-            $maskedProperties = $this->structuredDataMasker->mask(
-                $properties,
+        foreach (get_object_vars($data) as $key => $value) {
+            $properties[$key] = $this->maskNormalizedTree(
+                $value,
             );
-
-            if (!is_array($maskedProperties)) {
-                throw new \LogicException('Masked JSON object properties must remain an array.');
-            }
-
-            return (object) $maskedProperties;
         }
 
-        if (is_array($data)) {
-            $values = [];
+        $maskedProperties = $this->structuredDataMasker->mask(
+            $properties,
+        );
 
-            foreach ($data as $key => $value) {
-                $values[$key] = $this->maskDecodedJson($value);
-            }
-
-            return $this->maskNormalized($values);
+        if (!is_array($maskedProperties)) {
+            throw new \LogicException('Masked JSON object properties must remain an array.');
         }
 
-        if (
-            null !== $data
-            && !is_scalar($data)
-        ) {
-            throw new \LogicException('Decoded JSON data must contain only objects, arrays, scalars, or null.');
-        }
-
-        return $this->maskNormalized($data);
+        return (object) $maskedProperties;
     }
 
     /**
@@ -116,7 +138,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
      *
      * @return scalar|array<mixed, mixed>|null
      */
-    private function maskNormalized(
+    private function maskScalarOrArray(
         #[\SensitiveParameter]
         mixed $data,
     ): mixed {

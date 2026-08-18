@@ -156,6 +156,121 @@ final class SensitiveFormatterObjectMaskingTest extends TestCase
         );
     }
 
+    public function testJsonFormatterMasksJsonSerializableReturningObject(): void
+    {
+        $payload = new class implements \JsonSerializable {
+            public function jsonSerialize(): mixed
+            {
+                return (object) [
+                    'card' => '4111111111111111',
+                ];
+            }
+        };
+
+        $output = $this->createJsonFormatter()->format(
+            $this->createRecord($payload),
+        );
+
+        self::assertStringNotContainsString(
+            '4111111111111111',
+            $output,
+        );
+
+        self::assertStringContainsString(
+            str_repeat('█', 16),
+            $output,
+        );
+    }
+
+    public function testJsonFormatterMasksJsonSerializableReturningNestedObject(): void
+    {
+        $nested = new \stdClass();
+        $nested->card = '4111111111111111';
+
+        $payload = new class($nested) implements \JsonSerializable {
+            public function __construct(
+                private readonly object $nested,
+            ) {
+            }
+
+            public function jsonSerialize(): mixed
+            {
+                return [
+                    'level_one' => [
+                        'level_two' => $this->nested,
+                    ],
+                ];
+            }
+        };
+
+        $output = $this->createJsonFormatter()->format(
+            $this->createRecord($payload),
+        );
+
+        self::assertStringNotContainsString(
+            '4111111111111111',
+            $output,
+        );
+
+        self::assertStringContainsString(
+            str_repeat('█', 16),
+            $output,
+        );
+    }
+
+    public function testJsonFormatterMasksJsonSerializableObjectInBatch(): void
+    {
+        $payload = new class implements \JsonSerializable {
+            public function jsonSerialize(): mixed
+            {
+                return (object) [
+                    'card' => '4111111111111111',
+                ];
+            }
+        };
+
+        $output = $this->createJsonFormatter()->formatBatch([
+            $this->createRecord($payload),
+        ]);
+
+        self::assertStringNotContainsString(
+            '4111111111111111',
+            $output,
+        );
+
+        self::assertStringContainsString(
+            str_repeat('█', 16),
+            $output,
+        );
+
+        $decoded = json_decode(
+            $output,
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        self::assertIsArray($decoded);
+        self::assertCount(1, $decoded);
+
+        $record = $decoded[0] ?? null;
+
+        self::assertIsArray($record);
+
+        $context = $record['context'] ?? null;
+
+        self::assertIsArray($context);
+
+        $normalizedPayload = $context['payload'] ?? null;
+
+        self::assertIsArray($normalizedPayload);
+
+        self::assertSame(
+            str_repeat('█', 16),
+            $normalizedPayload['card'],
+        );
+    }
+
     private function createLineFormatter(): SensitiveLineFormatter
     {
         return new SensitiveLineFormatter(
