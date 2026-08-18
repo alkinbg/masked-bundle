@@ -125,7 +125,7 @@ MaskedBundle does not perform card-brand, BIN or IIN identification.
 
 ## Monolog processor
 
-When Monolog is available, MaskedBundle registers a Monolog processor automatically.
+When Monolog and Symfony MonologBundle are available, MaskedBundle automatically registers its sensitive data processor with MonologBundle.
 
 The processor masks sensitive data in:
 
