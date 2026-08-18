@@ -11,39 +11,39 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 final class MaskedBundle extends AbstractBundle
 {
-	public function configure(DefinitionConfigurator $definition): void
-	{
-		$definition->rootNode()
-			->children()
-			->stringNode('mask_character')
-			->defaultValue('█')
-			->validate()
-			->ifTrue(
-				static fn(string $value): bool => !mb_check_encoding($value, 'UTF-8')
-					|| mb_strlen($value, 'UTF-8') !== 1,
-			)
-			->thenInvalid(
-				'The "mask_character" option must contain exactly one valid UTF-8 character.',
-			)
-			->end()
-			->end()
-			->end();
-	}
+    public function configure(DefinitionConfigurator $definition): void
+    {
+        $definition->rootNode()
+            ->children()
+            ->stringNode('mask_character')
+            ->defaultValue('█')
+            ->validate()
+            ->ifTrue(
+                static fn (string $value): bool => !mb_check_encoding($value, 'UTF-8')
+                    || 1 !== mb_strlen($value, 'UTF-8'),
+            )
+            ->thenInvalid(
+                'The "mask_character" option must contain exactly one valid UTF-8 character.',
+            )
+            ->end()
+            ->end()
+            ->end();
+    }
 
-	/**
-	 * @param array{mask_character: string} $config
-	 */
-	public function loadExtension(
-		array $config,
-		ContainerConfigurator $configurator,
-		ContainerBuilder $container,
-	): void {
-		$configurator->import(
-			__DIR__ . '/../config/services.php',
-		);
+    /**
+     * @param array{mask_character: string} $config
+     */
+    public function loadExtension(
+        array $config,
+        ContainerConfigurator $configurator,
+        ContainerBuilder $container,
+    ): void {
+        $configurator->import(
+            __DIR__.'/../config/services.php',
+        );
 
-		$configurator->services()
-			->get(Redactor::class)
-			->arg('$maskCharacter', $config['mask_character']);
-	}
+        $configurator->services()
+            ->get(Redactor::class)
+            ->arg('$maskCharacter', $config['mask_character']);
+    }
 }

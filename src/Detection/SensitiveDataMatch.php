@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Alkin\MaskedBundle\Detection;
 
-use InvalidArgumentException;
-
 /**
  * Represents the byte range of sensitive data detected inside a string.
  *
@@ -14,27 +12,21 @@ use InvalidArgumentException;
  */
 final readonly class SensitiveDataMatch
 {
-	public function __construct(
-		public int $byteOffset,
-		public int $byteLength,
-	) {
-		if ($this->byteOffset < 0)
-		{
-			throw new InvalidArgumentException(
-				'The byte offset cannot be negative.',
-			);
-		}
+    public function __construct(
+        public int $byteOffset,
+        public int $byteLength,
+    ) {
+        if ($this->byteOffset < 0) {
+            throw new \InvalidArgumentException('The byte offset cannot be negative.');
+        }
 
-		if ($this->byteLength < 1)
-		{
-			throw new InvalidArgumentException(
-				'The byte length must be greater than zero.',
-			);
-		}
-	}
+        if ($this->byteLength < 1) {
+            throw new \InvalidArgumentException('The byte length must be greater than zero.');
+        }
+    }
 
-	public function endByteOffsetExclusive(): int
-	{
-		return $this->byteOffset + $this->byteLength;
-	}
+    public function endByteOffsetExclusive(): int
+    {
+        return $this->byteOffset + $this->byteLength;
+    }
 }
