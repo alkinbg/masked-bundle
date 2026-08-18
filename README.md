@@ -408,9 +408,13 @@ long-running applications and contemporary logging pipelines.
 
 MaskedBundle grew from that thought.
 
-It is not a port of Fuko\Masked and does not attempt to preserve its API.
-Its architecture and implementation are new, but the original project's
-philosophy remains an important part of its foundation.
+MaskedBundle is not a drop-in port of Fuko\Masked and does not attempt to
+preserve its API. Its Symfony-facing architecture was designed for modern
+dependency injection, stateless operation and contemporary logging pipelines.
+
+The payment-card detection work has clear lineage to earlier work contributed
+to Fuko\Masked. That provenance and the original project's MIT license are
+documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 My sincere thanks to КТ
 ([Kaloyan K. Tsvetkov](https://github.com/kktsvetkov)) for the original idea,
@@ -434,3 +438,6 @@ composer analyse
 ## License
 
 MaskedBundle is released under the MIT License.
+
+Third-party attribution and license notices are documented in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

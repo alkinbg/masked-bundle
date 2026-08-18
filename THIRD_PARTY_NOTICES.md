@@ -1,0 +1,40 @@
+# Third-Party Notices
+
+MaskedBundle has historical and technical lineage to Fuko\Masked, created by
+Kaloyan K. Tsvetkov.
+
+The payment-card detection work in MaskedBundle was informed by earlier work
+contributed to Fuko\Masked. MaskedBundle has since been redesigned around
+Symfony services, dependency injection, stateless operation, structured-data
+masking and modern logging integrations.
+
+This notice preserves attribution to the original project and its license.
+
+## Fuko\Masked
+
+Project: Fuko\Masked  
+Source: https://github.com/fuko-php/masked  
+Copyright (c) 2018 Kaloyan K. Tsvetkov  
+License: MIT
+
+MIT License
+
+Copyright (c) 2018 Kaloyan K. Tsvetkov
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
