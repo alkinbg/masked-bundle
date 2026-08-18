@@ -13,10 +13,8 @@ use Stringable;
 final readonly class SensitiveLogger
 {
 	public function __construct(
-		private SensitiveDataMasker $sensitiveDataMasker =
-		new SensitiveDataMasker(),
-		private StructuredDataMasker $structuredDataMasker =
-		new StructuredDataMasker(),
+		private SensitiveDataMasker $sensitiveDataMasker,
+		private StructuredDataMasker $structuredDataMasker,
 	) {
 	}
 
