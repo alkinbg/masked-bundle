@@ -263,6 +263,13 @@ including rendered object and exception representations.
 before the complete log record is encoded as JSON.
 
 It deliberately does not post-process an already serialized JSON document.
+Formatter masking has its own bounded traversal. At most 1,000 entries are
+processed per container, nesting is limited to 32 masking levels, and a single
+`format()` or `formatBatch()` operation processes at most 10,000 entries in
+total.
+
+If a masking limit is reached, unprocessed normalized data is omitted and a
+safe placeholder is emitted instead.
 
 ## Service architecture
 

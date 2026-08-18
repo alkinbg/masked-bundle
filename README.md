@@ -339,6 +339,14 @@ the complete log record is serialized.
 
 This avoids post-processing an already encoded JSON string and preserves valid
 JSON output.
+JSON masking is bounded independently from Monolog normalization. Containers
+are limited to 1,000 processed entries, nesting is limited to 32 masking
+levels, and one `format()` or `formatBatch()` operation is limited to 10,000
+processed entries in total.
+
+When a masking limit is reached, remaining unprocessed normalized data is
+omitted and a safe placeholder is inserted. Raw unprocessed values are never
+copied into the final JSON output.
 
 ## Choosing a Monolog formatter
 

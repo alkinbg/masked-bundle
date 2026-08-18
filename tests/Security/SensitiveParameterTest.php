@@ -205,6 +205,18 @@ final class SensitiveParameterTest extends TestCase
             'record',
         ];
 
+        yield 'JSON formatter record' => [
+            SensitiveJsonFormatter::class,
+            'format',
+            'record',
+        ];
+
+        yield 'JSON formatter batch records' => [
+            SensitiveJsonFormatter::class,
+            'formatBatch',
+            'records',
+        ];
+
         yield 'JSON normalization data' => [
             SensitiveJsonFormatter::class,
             'normalize',
@@ -223,15 +235,27 @@ final class SensitiveParameterTest extends TestCase
             'data',
         ];
 
+        yield 'JSON array data' => [
+            SensitiveJsonFormatter::class,
+            'maskJsonArray',
+            'data',
+        ];
+
         yield 'JSON object data' => [
             SensitiveJsonFormatter::class,
             'maskJsonObject',
             'data',
         ];
 
-        yield 'JSON scalar or array data' => [
+        yield 'JSON key' => [
             SensitiveJsonFormatter::class,
-            'maskScalarOrArray',
+            'maskJsonKey',
+            'key',
+        ];
+
+        yield 'JSON scalar data' => [
+            SensitiveJsonFormatter::class,
+            'maskScalar',
             'data',
         ];
     }
