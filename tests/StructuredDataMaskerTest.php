@@ -431,8 +431,8 @@ final class StructuredDataMaskerTest extends TestCase
         );
 
         self::assertNotContains(
-	        '4111111111111111',
-	        $masked
+            '4111111111111111',
+            $masked
         );
     }
 
