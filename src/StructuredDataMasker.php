@@ -4,8 +4,18 @@ declare(strict_types=1);
 
 namespace Alkin\MaskedBundle;
 
+use ReflectionReference;
+
 final readonly class StructuredDataMasker
 {
+	private const int MAX_ARRAY_NESTING_DEPTH = 32;
+
+	private const string RECURSIVE_ARRAY_PLACEHOLDER =
+		'[recursive array]';
+
+	private const string MAXIMUM_NESTING_DEPTH_PLACEHOLDER =
+		'[maximum nesting depth exceeded]';
+
 	public function __construct(
 		private SensitiveDataMasker $sensitiveDataMasker =
 		new SensitiveDataMasker(),
@@ -14,6 +24,21 @@ final readonly class StructuredDataMasker
 
 	public function mask(mixed $value): mixed
 	{
+		return $this->maskValue(
+			$value,
+			[],
+			0,
+		);
+	}
+
+	/**
+	 * @param array<string, true> $activeArrayReferenceIds
+	 */
+	private function maskValue(
+		mixed $value,
+		array $activeArrayReferenceIds,
+		int $arrayDepth,
+	): mixed {
 		if (is_string($value))
 		{
 			return $this->sensitiveDataMasker->mask($value);
@@ -40,6 +65,29 @@ final readonly class StructuredDataMasker
 			return $value;
 		}
 
+		if ($arrayDepth >= self::MAX_ARRAY_NESTING_DEPTH)
+		{
+			return self::MAXIMUM_NESTING_DEPTH_PLACEHOLDER;
+		}
+
+		return $this->maskArray(
+			$value,
+			$activeArrayReferenceIds,
+			$arrayDepth,
+		);
+	}
+
+	/**
+	 * @param array<int|string, mixed> $value
+	 * @param array<string, true> $activeArrayReferenceIds
+	 *
+	 * @return array<int|string, mixed>
+	 */
+	private function maskArray(
+		array $value,
+		array $activeArrayReferenceIds,
+		int $arrayDepth,
+	): array {
 		$masked = [];
 
 		foreach ($value as $key => $item)
@@ -51,7 +99,46 @@ final readonly class StructuredDataMasker
 				$masked,
 			);
 
-			$masked[$maskedKey] = $this->mask($item);
+			if (is_array($item))
+			{
+				$reference = ReflectionReference::fromArrayElement(
+					$value,
+					$key,
+				);
+
+				if ($reference !== null)
+				{
+					$referenceId = 'ref:' . $reference->getId();
+
+					if (isset($activeArrayReferenceIds[$referenceId]))
+					{
+						$masked[$maskedKey] =
+							self::RECURSIVE_ARRAY_PLACEHOLDER;
+
+						continue;
+					}
+
+					$nestedActiveArrayReferenceIds =
+						$activeArrayReferenceIds;
+
+					$nestedActiveArrayReferenceIds[$referenceId] =
+						true;
+
+					$masked[$maskedKey] = $this->maskValue(
+						$item,
+						$nestedActiveArrayReferenceIds,
+						$arrayDepth + 1,
+					);
+
+					continue;
+				}
+			}
+
+			$masked[$maskedKey] = $this->maskValue(
+				$item,
+				$activeArrayReferenceIds,
+				$arrayDepth + 1,
+			);
 		}
 
 		return $masked;

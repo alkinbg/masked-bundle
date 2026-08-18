@@ -132,4 +132,190 @@ final class StructuredDataMaskerTest extends TestCase
 			new StructuredDataMasker()->mask($object),
 		);
 	}
+
+	public function testHandlesSelfReferentialArray(): void
+	{
+		$value = [
+			'card' => '4111111111111111',
+		];
+
+		$value['self'] =& $value;
+
+		$masked = new StructuredDataMasker()->mask($value);
+
+		self::assertIsArray($masked);
+
+		self::assertSame(
+			str_repeat('█', 16),
+			$masked['card'],
+		);
+
+		$self = $masked['self'];
+
+		self::assertIsArray($self);
+
+		self::assertSame(
+			str_repeat('█', 16),
+			$self['card'],
+		);
+
+		self::assertSame(
+			'[recursive array]',
+			$self['self'],
+		);
+
+		self::assertSame(
+			'4111111111111111',
+			$value['card'],
+		);
+	}
+
+	public function testHandlesMutuallyRecursiveArrays(): void
+	{
+		$first = [
+			'card' => '4111111111111111',
+		];
+
+		$second = [
+			'card' => '5555555555554444',
+		];
+
+		$first['next'] =& $second;
+		$second['next'] =& $first;
+
+		$masked = new StructuredDataMasker()->mask($first);
+
+		self::assertIsArray($masked);
+
+		self::assertSame(
+			str_repeat('█', 16),
+			$masked['card'],
+		);
+
+		$maskedSecond = $masked['next'];
+
+		self::assertIsArray($maskedSecond);
+
+		self::assertSame(
+			str_repeat('█', 16),
+			$maskedSecond['card'],
+		);
+
+		$maskedFirst = $maskedSecond['next'];
+
+		self::assertIsArray($maskedFirst);
+
+		self::assertSame(
+			str_repeat('█', 16),
+			$maskedFirst['card'],
+		);
+
+		self::assertSame(
+			'[recursive array]',
+			$maskedFirst['next'],
+		);
+
+		self::assertSame(
+			'4111111111111111',
+			$first['card'],
+		);
+
+		self::assertSame(
+			'5555555555554444',
+			$second['card'],
+		);
+	}
+
+	public function testDoesNotTreatSharedArrayReferenceAsRecursion(): void
+	{
+		$shared = [
+			'card' => '4111111111111111',
+		];
+
+		$value = [
+			'first' => &$shared,
+			'second' => &$shared,
+		];
+
+		self::assertSame(
+			[
+				'first' => [
+					'card' => str_repeat('█', 16),
+				],
+				'second' => [
+					'card' => str_repeat('█', 16),
+				],
+			],
+			new StructuredDataMasker()->mask($value),
+		);
+	}
+
+	public function testMasksArrayBelowMaximumNestingDepth(): void
+	{
+		$value = self::createNestedArray(
+			31,
+			'4111111111111111',
+		);
+
+		$current = new StructuredDataMasker()->mask($value);
+
+		for ($level = 0; $level < 31; ++$level)
+		{
+			self::assertIsArray($current);
+			self::assertArrayHasKey('nested', $current);
+
+			$current = $current['nested'];
+		}
+
+		self::assertIsArray($current);
+
+		self::assertSame(
+			str_repeat('█', 16),
+			$current['card'],
+		);
+	}
+
+	public function testStopsAtMaximumNestingDepth(): void
+	{
+		$value = self::createNestedArray(
+			32,
+			'4111111111111111',
+		);
+
+		$current = new StructuredDataMasker()->mask($value);
+
+		for ($level = 0; $level < 32; ++$level)
+		{
+			self::assertIsArray($current);
+			self::assertArrayHasKey('nested', $current);
+
+			$current = $current['nested'];
+		}
+
+		self::assertSame(
+			'[maximum nesting depth exceeded]',
+			$current,
+		);
+	}
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	private static function createNestedArray(
+		int $nestingLevels,
+		string $card,
+	): array {
+		$value = [
+			'card' => $card,
+		];
+
+		for ($level = 0; $level < $nestingLevels; ++$level)
+		{
+			$value = [
+				'nested' => $value,
+			];
+		}
+
+		return $value;
+	}
 }
