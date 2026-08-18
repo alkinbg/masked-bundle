@@ -7,6 +7,7 @@ namespace Alkin\MaskedBundle\Tests\DependencyInjection;
 use Alkin\MaskedBundle\MaskedBundle;
 use Alkin\MaskedBundle\Monolog\SensitiveJsonFormatter;
 use Alkin\MaskedBundle\Monolog\SensitiveLineFormatter;
+use Alkin\MaskedBundle\SensitiveDataMasker;
 use Alkin\MaskedBundle\StructuredDataMasker;
 use Monolog\Level;
 use Monolog\LogRecord;
@@ -27,7 +28,7 @@ final class FormatterServiceConfigurationTest extends TestCase
         );
         self::assertEquals(
             [
-                new Reference(StructuredDataMasker::class),
+                new Reference(SensitiveDataMasker::class),
             ],
             $container
                 ->getDefinition(SensitiveLineFormatter::class)

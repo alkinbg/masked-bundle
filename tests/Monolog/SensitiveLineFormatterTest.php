@@ -8,7 +8,6 @@ use Alkin\MaskedBundle\Monolog\SensitiveLineFormatter;
 use Alkin\MaskedBundle\RangeRedactor;
 use Alkin\MaskedBundle\Redactor;
 use Alkin\MaskedBundle\SensitiveDataMasker;
-use Alkin\MaskedBundle\StructuredDataMasker;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -165,15 +164,11 @@ final class SensitiveLineFormatterTest extends TestCase
         string $maskCharacter = '█',
         bool $includeStacktraces = false,
     ): SensitiveLineFormatter {
-        $sensitiveDataMasker = new SensitiveDataMasker(
-            rangeRedactor: new RangeRedactor(
-                redactor: new Redactor($maskCharacter),
-            ),
-        );
-
         return new SensitiveLineFormatter(
-            structuredDataMasker: new StructuredDataMasker(
-                $sensitiveDataMasker,
+            sensitiveDataMasker: new SensitiveDataMasker(
+                rangeRedactor: new RangeRedactor(
+                    redactor: new Redactor($maskCharacter),
+                ),
             ),
             includeStacktraces: $includeStacktraces,
         );

@@ -63,7 +63,7 @@ return static function (ContainerConfigurator $container): void {
 
     $services->set(SensitiveLineFormatter::class)
         ->args([
-            service(StructuredDataMasker::class),
+            service(SensitiveDataMasker::class),
         ]);
 
     $services->set(SensitiveJsonFormatter::class)

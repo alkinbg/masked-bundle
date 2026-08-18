@@ -108,9 +108,7 @@ final class SensitiveFormatterObjectMaskingTest extends TestCase
     private function createLineFormatter(): SensitiveLineFormatter
     {
         return new SensitiveLineFormatter(
-            new StructuredDataMasker(
-                new SensitiveDataMasker(),
-            ),
+            new SensitiveDataMasker(),
         );
     }
 

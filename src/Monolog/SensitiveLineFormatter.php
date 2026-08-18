@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Alkin\MaskedBundle\Monolog;
 
-use Alkin\MaskedBundle\StructuredDataMasker;
-use JsonSerializable;
+use Alkin\MaskedBundle\SensitiveDataMasker;
 use Monolog\Formatter\LineFormatter;
-use Monolog\Utils;
+use Monolog\LogRecord;
 
 final class SensitiveLineFormatter extends LineFormatter
 {
     public function __construct(
-        private readonly StructuredDataMasker $structuredDataMasker,
+        private readonly SensitiveDataMasker $sensitiveDataMasker,
         ?string $format = null,
         ?string $dateFormat = null,
         bool $allowInlineLineBreaks = false,
@@ -28,63 +27,10 @@ final class SensitiveLineFormatter extends LineFormatter
         );
     }
 
-    /**
-     * @return scalar|array<mixed, mixed>|null
-     */
-    protected function normalize(
-        mixed $data,
-        int $depth = 0,
-    ): mixed {
-        if ($depth > $this->maxNormalizeDepth) {
-            return $this->maskNormalized(
-                parent::normalize($data, $depth),
-            );
-        }
-
-        /*
-         * NormalizerFormatter normally accepts the value returned from
-         * JsonSerializable without recursively normalizing it. Normalize it
-         * explicitly so objects nested inside that value cannot bypass
-         * masking later when LineFormatter serializes the normalized record.
-         */
-        if (
-            $data instanceof \JsonSerializable
-            && !$data instanceof \DateTimeInterface
-            && !$data instanceof \Throwable
-        ) {
-            $normalized = [
-                Utils::getClass($data) => $this->normalize(
-                    $data->jsonSerialize(),
-                    $depth + 1,
-                ),
-            ];
-
-            return $this->maskNormalized($normalized);
-        }
-
-        return $this->maskNormalized(
-            parent::normalize($data, $depth),
-        );
-    }
-
-    /**
-     * @param scalar|array<mixed, mixed>|null $data
-     *
-     * @return scalar|array<mixed, mixed>|null
-     */
-    private function maskNormalized(mixed $data): mixed
+    public function format(LogRecord $record): string
     {
-        $masked = $this->structuredDataMasker->mask($data);
-
-        if (
-            null !== $masked
-            && !is_scalar($masked)
-            && !is_array($masked)
-        ) {
-            throw new \LogicException('Normalized line formatter data must remain scalar, array, or null after masking.');
-        }
-
-        /** @var scalar|array<mixed, mixed>|null $masked */
-        return $masked;
+        return $this->sensitiveDataMasker->mask(
+            parent::format($record),
+        );
     }
 }
