@@ -143,9 +143,13 @@ String array keys are also checked.
 
 Objects are deliberately preserved rather than traversed or mutated.
 
-Recursive arrays are detected defensively and excessive array nesting is
-bounded, preventing malformed or cyclic structures from causing unbounded
-recursion.
+Recursive arrays, excessive nesting and unusually large array structures are
+bounded defensively.
+
+A single array is limited to 1,000 processed entries and one structured masking
+operation is limited to 10,000 processed array entries in total. When a limit
+is reached, remaining unprocessed data is omitted and represented by a safe
+placeholder rather than being returned without masking.
 
 ## Payment-card detection
 

@@ -170,8 +170,14 @@ $masked = $structuredDataMasker->mask(
 Objects are intentionally preserved and are not traversed or mutated by
 `StructuredDataMasker`.
 
-Recursive arrays and excessive nesting are handled defensively so malformed or
-cyclic data cannot cause unbounded recursion.
+Recursive arrays, excessive nesting and unusually large array structures are
+handled defensively. A single array is limited to 1,000 processed entries and
+one structured masking operation is limited to 10,000 processed array entries
+in total.
+
+When either work limit is reached, remaining unprocessed data is omitted and a
+safe placeholder is inserted. Unprocessed input is never copied into the
+masked result.
 
 ## Payment card detection
 

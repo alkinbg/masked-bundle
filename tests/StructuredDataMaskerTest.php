@@ -368,6 +368,140 @@ final class StructuredDataMaskerTest extends TestCase
         );
     }
 
+    public function testProcessesArrayAtMaximumItemCount(): void
+    {
+        $value = array_fill(
+            0,
+            1000,
+            'safe',
+        );
+
+        $value[999] = '4111111111111111';
+
+        $masked = new StructuredDataMasker()->mask($value);
+
+        self::assertIsArray($masked);
+
+        self::assertCount(
+            1000,
+            $masked,
+        );
+
+        self::assertSame(
+            str_repeat('█', 16),
+            $masked[999],
+        );
+
+        self::assertNotContains(
+            '[maximum array item count exceeded]',
+            $masked,
+        );
+    }
+
+    public function testStopsWhenArrayItemCountIsExceeded(): void
+    {
+        $value = array_fill(
+            0,
+            1500,
+            'safe',
+        );
+
+        $value[1000] = '4111111111111111';
+
+        $masked = new StructuredDataMasker()->mask($value);
+
+        self::assertIsArray($masked);
+
+        /*
+         * The first 1000 entries are processed. The remaining entries are
+         * omitted and represented by one safe placeholder.
+         */
+        self::assertCount(
+            1001,
+            $masked,
+        );
+
+        self::assertTrue(
+            array_is_list($masked),
+        );
+
+        self::assertSame(
+            '[maximum array item count exceeded]',
+            $masked[1000],
+        );
+
+        self::assertFalse(
+            in_array(
+                '4111111111111111',
+                $masked,
+                true,
+            ),
+        );
+    }
+
+    public function testStopsWhenTotalArrayWorkBudgetIsExceeded(): void
+    {
+        $value = [];
+
+        /*
+         * Each nested array stays below the per-array limit, while the complete
+         * tree exceeds the global masking budget.
+         */
+        for ($group = 0; $group < 20; ++$group) {
+            $value['group_'.$group] = array_fill(
+                0,
+                600,
+                'safe',
+            );
+        }
+
+        $value['group_19'][599] = '4111111111111111';
+
+        $masked = new StructuredDataMasker()->mask($value);
+
+        self::assertIsArray($masked);
+
+        $encoded = json_encode(
+            $masked,
+            JSON_THROW_ON_ERROR,
+        );
+
+        self::assertStringNotContainsString(
+            '4111111111111111',
+            $encoded,
+        );
+
+        self::assertStringContainsString(
+            '[maximum masking work budget exceeded]',
+            $encoded,
+        );
+    }
+
+    public function testUsesUniqueTruncationMarkerForAssociativeArray(): void
+    {
+        $value = [
+            '...' => 'existing value',
+        ];
+
+        for ($index = 0; $index < 1000; ++$index) {
+            $value['key_'.$index] = 'safe';
+        }
+
+        $masked = new StructuredDataMasker()->mask($value);
+
+        self::assertIsArray($masked);
+
+        self::assertSame(
+            'existing value',
+            $masked['...'],
+        );
+
+        self::assertSame(
+            '[maximum array item count exceeded]',
+            $masked['...#2'],
+        );
+    }
+
     public function testMasksArrayBelowMaximumNestingDepth(): void
     {
         $value = self::createNestedArray(

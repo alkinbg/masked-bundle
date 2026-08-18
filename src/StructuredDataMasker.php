@@ -8,9 +8,17 @@ final readonly class StructuredDataMasker
 {
     private const int MAX_ARRAY_NESTING_DEPTH = 32;
 
+    private const int MAX_ARRAY_ITEM_COUNT = 1000;
+
+    private const int MAX_TOTAL_ARRAY_ITEMS = 10000;
+
     private const string RECURSIVE_ARRAY_PLACEHOLDER = '[recursive array]';
 
     private const string MAXIMUM_NESTING_DEPTH_PLACEHOLDER = '[maximum nesting depth exceeded]';
+
+    private const string MAXIMUM_ARRAY_ITEM_COUNT_PLACEHOLDER = '[maximum array item count exceeded]';
+
+    private const string MAXIMUM_WORK_BUDGET_PLACEHOLDER = '[maximum masking work budget exceeded]';
 
     public function __construct(
         private SensitiveDataMasker $sensitiveDataMasker =
@@ -29,11 +37,14 @@ final readonly class StructuredDataMasker
     ): mixed {
         $this->validateSensitiveValues($sensitiveValues);
 
+        $remainingArrayItems = self::MAX_TOTAL_ARRAY_ITEMS;
+
         return $this->maskValue(
             $value,
             $sensitiveValues,
             [],
             0,
+            $remainingArrayItems,
         );
     }
 
@@ -48,6 +59,7 @@ final readonly class StructuredDataMasker
         array $sensitiveValues,
         array $activeArrayReferenceIds,
         int $arrayDepth,
+        int &$remainingArrayItems,
     ): mixed {
         if (is_string($value)) {
             return $this->sensitiveDataMasker->mask(
@@ -84,6 +96,7 @@ final readonly class StructuredDataMasker
             $sensitiveValues,
             $activeArrayReferenceIds,
             $arrayDepth,
+            $remainingArrayItems,
         );
     }
 
@@ -101,10 +114,33 @@ final readonly class StructuredDataMasker
         array $sensitiveValues,
         array $activeArrayReferenceIds,
         int $arrayDepth,
+        int &$remainingArrayItems,
     ): array {
         $masked = [];
+        $processedItems = 0;
 
         foreach ($value as $key => $item) {
+            if ($processedItems >= self::MAX_ARRAY_ITEM_COUNT) {
+                $this->appendTruncationPlaceholder(
+                    $masked,
+                    self::MAXIMUM_ARRAY_ITEM_COUNT_PLACEHOLDER,
+                );
+
+                break;
+            }
+
+            if ($remainingArrayItems <= 0) {
+                $this->appendTruncationPlaceholder(
+                    $masked,
+                    self::MAXIMUM_WORK_BUDGET_PLACEHOLDER,
+                );
+
+                break;
+            }
+
+            ++$processedItems;
+            --$remainingArrayItems;
+
             $maskedKey = $this->maskArrayKey(
                 $key,
                 $sensitiveValues,
@@ -142,6 +178,7 @@ final readonly class StructuredDataMasker
                         $sensitiveValues,
                         $nestedActiveArrayReferenceIds,
                         $arrayDepth + 1,
+                        $remainingArrayItems,
                     );
 
                     continue;
@@ -153,10 +190,37 @@ final readonly class StructuredDataMasker
                 $sensitiveValues,
                 $activeArrayReferenceIds,
                 $arrayDepth + 1,
+                $remainingArrayItems,
             );
         }
 
         return $masked;
+    }
+
+    /**
+     * Appends a truncation marker without exposing any unprocessed input.
+     *
+     * Lists remain lists. Associative arrays use a unique textual marker key
+     * so existing application data is never overwritten.
+     *
+     * @param array<int|string, mixed> $masked
+     */
+    private function appendTruncationPlaceholder(
+        array &$masked,
+        string $placeholder,
+    ): void {
+        if (array_is_list($masked)) {
+            $masked[] = $placeholder;
+
+            return;
+        }
+
+        $placeholderKey = $this->ensureUniqueArrayKey(
+            '...',
+            $masked,
+        );
+
+        $masked[$placeholderKey] = $placeholder;
     }
 
     /**
