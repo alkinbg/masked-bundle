@@ -54,6 +54,7 @@ final readonly class ExactValueDetector
         if ([] === $sensitiveValues) {
             return [];
         }
+
         $valueByteLength = strlen($value);
 
         if (
@@ -66,8 +67,8 @@ final readonly class ExactValueDetector
         }
 
         /*
-         * Preserve the programmer-error contract before applying resource
-         * limits: an empty explicit sensitive value is always invalid.
+         * For inputs within the supplied-value count limit, an empty explicit
+         * sensitive value remains a programmer error.
          */
         foreach ($sensitiveValues as $sensitiveValue) {
             if ('' === $sensitiveValue) {
@@ -77,17 +78,6 @@ final readonly class ExactValueDetector
 
         if ('' === $value) {
             return [];
-        }
-
-        $valueByteLength = strlen($value);
-
-        if (
-            count($sensitiveValues)
-            > self::MAX_SENSITIVE_VALUE_COUNT
-        ) {
-            return $this->failClosedMatch(
-                $valueByteLength,
-            );
         }
 
         $uniqueSensitiveValues = [];
@@ -129,6 +119,7 @@ final readonly class ExactValueDetector
 
             $seenSensitiveValues[$seenKey] = true;
             $uniqueSensitiveValues[] = $sensitiveValue;
+
             $totalSensitiveValueBytes +=
                 $sensitiveValueByteLength;
         }
@@ -220,7 +211,7 @@ final readonly class ExactValueDetector
                     $matches[] = new SensitiveDataMatch(
                         byteOffset: $pendingMatchByteOffset,
                         byteLength: $pendingMatchEndByteOffsetExclusive
-                        - $pendingMatchByteOffset,
+                            - $pendingMatchByteOffset,
                     );
 
                     $pendingMatchByteOffset =
@@ -242,7 +233,7 @@ final readonly class ExactValueDetector
                 $matches[] = new SensitiveDataMatch(
                     byteOffset: $pendingMatchByteOffset,
                     byteLength: $pendingMatchEndByteOffsetExclusive
-                    - $pendingMatchByteOffset,
+                        - $pendingMatchByteOffset,
                 );
             }
         }
