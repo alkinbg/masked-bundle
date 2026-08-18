@@ -19,62 +19,125 @@ use Masked\Bundle\StructuredDataMasker;
 return static function (ContainerConfigurator $container): void {
     $services = $container->services();
 
-    $services->set(Redactor::class);
+    $services->set(
+        '.masked.redactor',
+        Redactor::class,
+    );
 
-    $services->set(SensitiveDataMatchNormalizer::class);
+    $services->set(
+        '.masked.sensitive_data_match_normalizer',
+        SensitiveDataMatchNormalizer::class,
+    );
 
-    $services->set(PaymentCardDetector::class)
+    $services->set(
+        '.masked.payment_card_detector',
+        PaymentCardDetector::class,
+    )
         ->args([
-            service(SensitiveDataMatchNormalizer::class),
+            service('.masked.sensitive_data_match_normalizer'),
         ]);
 
-    $services->set(ExactValueDetector::class)
+    $services->set(
+        '.masked.exact_value_detector',
+        ExactValueDetector::class,
+    )
         ->args([
-            service(SensitiveDataMatchNormalizer::class),
+            service('.masked.sensitive_data_match_normalizer'),
         ]);
 
-    $services->set(RangeRedactor::class)
+    $services->set(
+        '.masked.range_redactor',
+        RangeRedactor::class,
+    )
         ->args([
-            service(Redactor::class),
-            service(SensitiveDataMatchNormalizer::class),
+            service('.masked.redactor'),
+            service('.masked.sensitive_data_match_normalizer'),
         ]);
 
-    $services->set(SensitiveDataMasker::class)
+    $services->set(
+        '.masked.sensitive_data_masker',
+        SensitiveDataMasker::class,
+    )
         ->args([
-            service(PaymentCardDetector::class),
-            service(ExactValueDetector::class),
-            service(RangeRedactor::class),
+            service('.masked.payment_card_detector'),
+            service('.masked.exact_value_detector'),
+            service('.masked.range_redactor'),
         ]);
 
-    $services->set(StructuredDataMasker::class)
+    $services->alias(
+        SensitiveDataMasker::class,
+        '.masked.sensitive_data_masker',
+    );
+
+    $services->set(
+        '.masked.structured_data_masker',
+        StructuredDataMasker::class,
+    )
         ->args([
-            service(SensitiveDataMasker::class),
+            service('.masked.sensitive_data_masker'),
         ]);
 
-    $services->set(SensitiveLogger::class)
+    $services->alias(
+        StructuredDataMasker::class,
+        '.masked.structured_data_masker',
+    );
+
+    $services->set(
+        '.masked.sensitive_logger',
+        SensitiveLogger::class,
+    )
         ->args([
-            service(SensitiveDataMasker::class),
-            service(StructuredDataMasker::class),
+            service('.masked.sensitive_data_masker'),
+            service('.masked.structured_data_masker'),
         ]);
+
+    $services->alias(
+        SensitiveLogger::class,
+        '.masked.sensitive_logger',
+    );
 
     if (!class_exists(\Monolog\LogRecord::class)) {
         return;
     }
 
-    $services->set(SensitiveLineFormatter::class)
+    $services->set(
+        '.masked.monolog.line_formatter',
+        SensitiveLineFormatter::class,
+    )
         ->args([
-            service(SensitiveDataMasker::class),
+            service('.masked.sensitive_data_masker'),
         ]);
 
-    $services->set(SensitiveJsonFormatter::class)
+    $services->alias(
+        SensitiveLineFormatter::class,
+        '.masked.monolog.line_formatter',
+    );
+
+    $services->set(
+        '.masked.monolog.json_formatter',
+        SensitiveJsonFormatter::class,
+    )
         ->args([
-            service(StructuredDataMasker::class),
+            service('.masked.structured_data_masker'),
         ]);
 
-    $services->set(SensitiveDataProcessor::class)
+    $services->alias(
+        SensitiveJsonFormatter::class,
+        '.masked.monolog.json_formatter',
+    );
+
+    $services->set(
+        '.masked.monolog.processor',
+        SensitiveDataProcessor::class,
+    )
         ->args([
-            service(SensitiveDataMasker::class),
-            service(StructuredDataMasker::class),
+            service('.masked.sensitive_data_masker'),
+            service('.masked.structured_data_masker'),
         ])
         ->tag('monolog.processor');
+
+    $services->alias(
+        SensitiveDataProcessor::class,
+        '.masked.monolog.processor',
+    );
 };

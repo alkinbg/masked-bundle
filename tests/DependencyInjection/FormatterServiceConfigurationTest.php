@@ -7,8 +7,6 @@ namespace Masked\Bundle\Tests\DependencyInjection;
 use Masked\Bundle\MaskedBundle;
 use Masked\Bundle\Monolog\SensitiveJsonFormatter;
 use Masked\Bundle\Monolog\SensitiveLineFormatter;
-use Masked\Bundle\SensitiveDataMasker;
-use Masked\Bundle\StructuredDataMasker;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -24,27 +22,47 @@ final class FormatterServiceConfigurationTest extends TestCase
         $container = $this->createContainer();
 
         self::assertTrue(
-            $container->hasDefinition(SensitiveLineFormatter::class),
+            $container->hasDefinition('.masked.monolog.line_formatter'),
         );
+
         self::assertEquals(
             [
-                new Reference(SensitiveDataMasker::class),
+                new Reference('.masked.sensitive_data_masker'),
             ],
             $container
-                ->getDefinition(SensitiveLineFormatter::class)
+                ->getDefinition('.masked.monolog.line_formatter')
                 ->getArguments(),
         );
 
         self::assertTrue(
-            $container->hasDefinition(SensitiveJsonFormatter::class),
+            $container->hasAlias(SensitiveLineFormatter::class),
         );
+
+        self::assertSame(
+            '.masked.monolog.line_formatter',
+            (string) $container->getAlias(SensitiveLineFormatter::class),
+        );
+
+        self::assertTrue(
+            $container->hasDefinition('.masked.monolog.json_formatter'),
+        );
+
         self::assertEquals(
             [
-                new Reference(StructuredDataMasker::class),
+                new Reference('.masked.structured_data_masker'),
             ],
             $container
-                ->getDefinition(SensitiveJsonFormatter::class)
+                ->getDefinition('.masked.monolog.json_formatter')
                 ->getArguments(),
+        );
+
+        self::assertTrue(
+            $container->hasAlias(SensitiveJsonFormatter::class),
+        );
+
+        self::assertSame(
+            '.masked.monolog.json_formatter',
+            (string) $container->getAlias(SensitiveJsonFormatter::class),
         );
 
         $this->makeFormattersPublic($container);
@@ -70,6 +88,7 @@ final class FormatterServiceConfigurationTest extends TestCase
             '4111111111111111',
             $lineOutput,
         );
+
         self::assertStringContainsString(
             str_repeat('█', 16),
             $lineOutput,
@@ -90,6 +109,7 @@ final class FormatterServiceConfigurationTest extends TestCase
             '4111111111111111',
             $jsonOutput,
         );
+
         self::assertStringContainsString(
             str_repeat('█', 16),
             $jsonOutput,
@@ -136,6 +156,7 @@ final class FormatterServiceConfigurationTest extends TestCase
             '4111111111111111',
             $lineOutput,
         );
+
         self::assertStringContainsString(
             str_repeat('*', 16),
             $lineOutput,
@@ -156,6 +177,7 @@ final class FormatterServiceConfigurationTest extends TestCase
             '4111111111111111',
             $jsonOutput,
         );
+
         self::assertStringContainsString(
             str_repeat('*', 16),
             $jsonOutput,
@@ -186,11 +208,11 @@ final class FormatterServiceConfigurationTest extends TestCase
         ContainerBuilder $container,
     ): void {
         $container
-            ->getDefinition(SensitiveLineFormatter::class)
+            ->getAlias(SensitiveLineFormatter::class)
             ->setPublic(true);
 
         $container
-            ->getDefinition(SensitiveJsonFormatter::class)
+            ->getAlias(SensitiveJsonFormatter::class)
             ->setPublic(true);
     }
 

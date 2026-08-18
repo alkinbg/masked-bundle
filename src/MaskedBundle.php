@@ -43,7 +43,7 @@ final class MaskedBundle extends AbstractBundle
         );
 
         $configurator->services()
-            ->get(Redactor::class)
+            ->get('.masked.redactor')
             ->arg('$maskCharacter', $config['mask_character']);
     }
 }

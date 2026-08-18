@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Masked\Bundle\Tests;
 
 use Masked\Bundle\MaskedBundle;
-use Masked\Bundle\Redactor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -27,7 +26,7 @@ final class MaskedBundleTest extends TestCase
                 '$maskCharacter' => '🔒',
             ],
             $container
-                ->getDefinition(Redactor::class)
+                ->getDefinition('.masked.redactor')
                 ->getArguments(),
         );
     }

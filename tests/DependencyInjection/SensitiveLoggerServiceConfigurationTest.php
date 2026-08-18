@@ -6,8 +6,6 @@ namespace Masked\Bundle\Tests\DependencyInjection;
 
 use Masked\Bundle\Logging\SensitiveLogger;
 use Masked\Bundle\MaskedBundle;
-use Masked\Bundle\SensitiveDataMasker;
-use Masked\Bundle\StructuredDataMasker;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -26,14 +24,27 @@ final class SensitiveLoggerServiceConfigurationTest extends TestCase
 
         $extension->load([], $container);
 
+        self::assertTrue(
+            $container->hasDefinition('.masked.sensitive_logger'),
+        );
+
         self::assertEquals(
             [
-                new Reference(SensitiveDataMasker::class),
-                new Reference(StructuredDataMasker::class),
+                new Reference('.masked.sensitive_data_masker'),
+                new Reference('.masked.structured_data_masker'),
             ],
             $container
-                ->getDefinition(SensitiveLogger::class)
+                ->getDefinition('.masked.sensitive_logger')
                 ->getArguments(),
+        );
+
+        self::assertTrue(
+            $container->hasAlias(SensitiveLogger::class),
+        );
+
+        self::assertSame(
+            '.masked.sensitive_logger',
+            (string) $container->getAlias(SensitiveLogger::class),
         );
     }
 }

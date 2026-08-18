@@ -34,102 +34,223 @@ final class ServiceConfigurationTest extends TestCase
         $extension->load([], $container);
 
         self::assertSame(
+            Redactor::class,
+            $container
+                ->getDefinition('.masked.redactor')
+                ->getClass(),
+        );
+
+        self::assertSame(
             [
                 '$maskCharacter' => '█',
             ],
-            $container->getDefinition(Redactor::class)->getArguments(),
+            $container
+                ->getDefinition('.masked.redactor')
+                ->getArguments(),
         );
+
+        self::assertSame(
+            SensitiveDataMatchNormalizer::class,
+            $container
+                ->getDefinition('.masked.sensitive_data_match_normalizer')
+                ->getClass(),
+        );
+
         self::assertSame(
             [],
             $container
-                ->getDefinition(SensitiveDataMatchNormalizer::class)
+                ->getDefinition('.masked.sensitive_data_match_normalizer')
                 ->getArguments(),
         );
+
+        self::assertSame(
+            PaymentCardDetector::class,
+            $container
+                ->getDefinition('.masked.payment_card_detector')
+                ->getClass(),
+        );
+
         self::assertEquals(
             [
-                new Reference(SensitiveDataMatchNormalizer::class),
+                new Reference(
+                    '.masked.sensitive_data_match_normalizer',
+                ),
             ],
             $container
-                ->getDefinition(PaymentCardDetector::class)
+                ->getDefinition('.masked.payment_card_detector')
                 ->getArguments(),
         );
+
+        self::assertSame(
+            ExactValueDetector::class,
+            $container
+                ->getDefinition('.masked.exact_value_detector')
+                ->getClass(),
+        );
+
         self::assertEquals(
             [
-                new Reference(Redactor::class),
-                new Reference(SensitiveDataMatchNormalizer::class),
+                new Reference(
+                    '.masked.sensitive_data_match_normalizer',
+                ),
             ],
             $container
-                ->getDefinition(RangeRedactor::class)
+                ->getDefinition('.masked.exact_value_detector')
                 ->getArguments(),
         );
+
+        self::assertSame(
+            RangeRedactor::class,
+            $container
+                ->getDefinition('.masked.range_redactor')
+                ->getClass(),
+        );
+
         self::assertEquals(
             [
-                new Reference(PaymentCardDetector::class),
-                new Reference(ExactValueDetector::class),
-                new Reference(RangeRedactor::class),
+                new Reference('.masked.redactor'),
+                new Reference(
+                    '.masked.sensitive_data_match_normalizer',
+                ),
             ],
             $container
-                ->getDefinition(SensitiveDataMasker::class)
+                ->getDefinition('.masked.range_redactor')
                 ->getArguments(),
         );
-        self::assertEquals(
-            [
-                new Reference(SensitiveDataMatchNormalizer::class),
-            ],
+
+        self::assertSame(
+            SensitiveDataMasker::class,
             $container
-                ->getDefinition(ExactValueDetector::class)
-                ->getArguments(),
+                ->getDefinition('.masked.sensitive_data_masker')
+                ->getClass(),
         );
+
         self::assertEquals(
             [
-                new Reference(SensitiveDataMasker::class),
+                new Reference('.masked.payment_card_detector'),
+                new Reference('.masked.exact_value_detector'),
+                new Reference('.masked.range_redactor'),
             ],
             $container
-                ->getDefinition(StructuredDataMasker::class)
+                ->getDefinition('.masked.sensitive_data_masker')
                 ->getArguments(),
         );
 
         self::assertTrue(
-            $container->hasDefinition(SensitiveDataProcessor::class),
+            $container->hasAlias(SensitiveDataMasker::class),
         );
+
+        self::assertSame(
+            '.masked.sensitive_data_masker',
+            (string) $container->getAlias(
+                SensitiveDataMasker::class,
+            ),
+        );
+
+        self::assertSame(
+            StructuredDataMasker::class,
+            $container
+                ->getDefinition('.masked.structured_data_masker')
+                ->getClass(),
+        );
+
         self::assertEquals(
             [
-                new Reference(SensitiveDataMasker::class),
-                new Reference(StructuredDataMasker::class),
+                new Reference('.masked.sensitive_data_masker'),
             ],
             $container
-                ->getDefinition(SensitiveDataProcessor::class)
+                ->getDefinition('.masked.structured_data_masker')
                 ->getArguments(),
         );
+
+        self::assertTrue(
+            $container->hasAlias(StructuredDataMasker::class),
+        );
+
         self::assertSame(
+            '.masked.structured_data_masker',
+            (string) $container->getAlias(
+                StructuredDataMasker::class,
+            ),
+        );
+
+        self::assertTrue(
+            $container->hasDefinition(
+                '.masked.monolog.processor',
+            ),
+        );
+
+        self::assertSame(
+            SensitiveDataProcessor::class,
+            $container
+                ->getDefinition('.masked.monolog.processor')
+                ->getClass(),
+        );
+
+        self::assertEquals(
             [
-                [
-                ],
+                new Reference('.masked.sensitive_data_masker'),
+                new Reference('.masked.structured_data_masker'),
             ],
             $container
-                ->getDefinition(SensitiveDataProcessor::class)
+                ->getDefinition('.masked.monolog.processor')
+                ->getArguments(),
+        );
+
+        self::assertSame(
+            [
+                [],
+            ],
+            $container
+                ->getDefinition('.masked.monolog.processor')
                 ->getTag('monolog.processor'),
         );
 
+        self::assertTrue(
+            $container->hasAlias(SensitiveDataProcessor::class),
+        );
+
+        self::assertSame(
+            '.masked.monolog.processor',
+            (string) $container->getAlias(
+                SensitiveDataProcessor::class,
+            ),
+        );
+
         $container
-            ->getDefinition(SensitiveDataMasker::class)
+            ->getAlias(SensitiveDataMasker::class)
             ->setPublic(true);
+
         $container
-            ->getDefinition(SensitiveDataProcessor::class)
+            ->getAlias(SensitiveDataProcessor::class)
             ->setPublic(true);
 
         $container->compile();
 
-        /** @var SensitiveDataMasker $masker */
-        $masker = $container->get(SensitiveDataMasker::class);
+        $masker = $container->get(
+            SensitiveDataMasker::class,
+        );
+
+        self::assertInstanceOf(
+            SensitiveDataMasker::class,
+            $masker,
+        );
 
         self::assertSame(
             'Card: '.str_repeat('█', 16),
-            $masker->mask('Card: 4111111111111111'),
+            $masker->mask(
+                'Card: 4111111111111111',
+            ),
         );
 
-        /** @var SensitiveDataProcessor $processor */
-        $processor = $container->get(SensitiveDataProcessor::class);
+        $processor = $container->get(
+            SensitiveDataProcessor::class,
+        );
+
+        self::assertInstanceOf(
+            SensitiveDataProcessor::class,
+            $processor,
+        );
 
         $record = $processor(
             new LogRecord(
@@ -149,6 +270,7 @@ final class ServiceConfigurationTest extends TestCase
             'Card '.str_repeat('█', 16),
             $record->message,
         );
+
         self::assertSame(
             str_repeat('█', 16),
             $record->context['card'],
@@ -176,28 +298,45 @@ final class ServiceConfigurationTest extends TestCase
             [
                 '$maskCharacter' => '*',
             ],
-            $container->getDefinition(Redactor::class)->getArguments(),
+            $container
+                ->getDefinition('.masked.redactor')
+                ->getArguments(),
         );
 
         $container
-            ->getDefinition(SensitiveDataMasker::class)
+            ->getAlias(SensitiveDataMasker::class)
             ->setPublic(true);
+
         $container
-            ->getDefinition(SensitiveDataProcessor::class)
+            ->getAlias(SensitiveDataProcessor::class)
             ->setPublic(true);
 
         $container->compile();
 
-        /** @var SensitiveDataMasker $masker */
-        $masker = $container->get(SensitiveDataMasker::class);
+        $masker = $container->get(
+            SensitiveDataMasker::class,
+        );
+
+        self::assertInstanceOf(
+            SensitiveDataMasker::class,
+            $masker,
+        );
 
         self::assertSame(
             'Card: '.str_repeat('*', 16),
-            $masker->mask('Card: 4111111111111111'),
+            $masker->mask(
+                'Card: 4111111111111111',
+            ),
         );
 
-        /** @var SensitiveDataProcessor $processor */
-        $processor = $container->get(SensitiveDataProcessor::class);
+        $processor = $container->get(
+            SensitiveDataProcessor::class,
+        );
+
+        self::assertInstanceOf(
+            SensitiveDataProcessor::class,
+            $processor,
+        );
 
         $record = $processor(
             new LogRecord(
@@ -217,6 +356,7 @@ final class ServiceConfigurationTest extends TestCase
             'Card '.str_repeat('*', 16),
             $record->message,
         );
+
         self::assertSame(
             str_repeat('*', 16),
             $record->context['card'],
