@@ -105,6 +105,57 @@ final class SensitiveFormatterObjectMaskingTest extends TestCase
         );
     }
 
+    public function testJsonFormatterPreservesEmptyObjectRepresentation(): void
+    {
+        $output = $this->createJsonFormatter()->format(
+            $this->createRecord(new \stdClass()),
+        );
+
+        $decoded = json_decode(
+            $output,
+            false,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        self::assertInstanceOf(\stdClass::class, $decoded);
+        self::assertInstanceOf(\stdClass::class, $decoded->context);
+        self::assertInstanceOf(\stdClass::class, $decoded->context->payload);
+    }
+
+    public function testJsonFormatterPreservesNestedObjectRepresentation(): void
+    {
+        $nested = new \stdClass();
+        $nested->card = '4111111111111111';
+
+        $payload = new \stdClass();
+        $payload->nested = $nested;
+
+        $output = $this->createJsonFormatter()->format(
+            $this->createRecord($payload),
+        );
+
+        $decoded = json_decode(
+            $output,
+            false,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        self::assertInstanceOf(\stdClass::class, $decoded);
+        self::assertInstanceOf(\stdClass::class, $decoded->context);
+        self::assertInstanceOf(\stdClass::class, $decoded->context->payload);
+        self::assertInstanceOf(
+            \stdClass::class,
+            $decoded->context->payload->nested,
+        );
+
+        self::assertSame(
+            str_repeat('█', 16),
+            $decoded->context->payload->nested->card,
+        );
+    }
+
     private function createLineFormatter(): SensitiveLineFormatter
     {
         return new SensitiveLineFormatter(

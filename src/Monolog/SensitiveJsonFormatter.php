@@ -5,11 +5,7 @@ declare(strict_types=1);
 namespace Alkin\MaskedBundle\Monolog;
 
 use Alkin\MaskedBundle\StructuredDataMasker;
-use DateTimeInterface;
-use JsonSerializable;
 use Monolog\Formatter\JsonFormatter;
-use Stringable;
-use Throwable;
 
 final class SensitiveJsonFormatter extends JsonFormatter
 {
@@ -29,7 +25,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
     }
 
     /**
-     * @return scalar|array<mixed, mixed>|object|null
+     * @return scalar|array<mixed, mixed>|\stdClass|null
      *
      * @throws \JsonException
      */
@@ -38,119 +34,84 @@ final class SensitiveJsonFormatter extends JsonFormatter
         mixed $data,
         int $depth = 0,
     ): mixed {
-        if ($depth > $this->maxNormalizeDepth) {
-            return $this->maskNormalized(
-                parent::normalize($data, $depth),
-            );
+        $normalized = parent::normalize(
+            $data,
+            $depth,
+        );
+
+        if (is_object($normalized)) {
+            return $this->normalizeJsonRepresentation($normalized);
         }
 
-        if (!is_object($data)) {
-            return $this->maskNormalized(
-                parent::normalize($data, $depth),
-            );
-        }
-
-        /*
-         * Preserve Monolog's native DateTime normalization.
-         *
-         * DateTimeInterface is not Stringable and must not fall through
-         * to generic JSON object handling.
-         */
-        if ($data instanceof \DateTimeInterface) {
-            return $this->maskNormalized(
-                parent::normalize($data, $depth),
-            );
-        }
-
-        /*
-         * Throwable implements Stringable, but Monolog intentionally treats
-         * exceptions before generic Stringable objects so exception metadata
-         * and stacktrace configuration remain intact.
-         */
-        if ($data instanceof \Throwable) {
-            return $this->maskNormalized(
-                parent::normalize($data, $depth),
-            );
-        }
-
-        /*
-         * JsonFormatter intentionally leaves JsonSerializable objects to the
-         * JSON encoder. Resolve exactly that JSON representation now so it can
-         * be masked before the complete record is encoded.
-         */
-        if ($data instanceof \JsonSerializable) {
-            return $this->normalizeJsonRepresentation($data);
-        }
-
-        /*
-         * Preserve Monolog's __toString() behavior, including its exception
-         * handling when __toString() fails.
-         */
-        if ($data instanceof \Stringable) {
-            return $this->maskNormalized(
-                parent::normalize($data, $depth),
-            );
-        }
-
-        /*
-         * Preserve Monolog's special handling of incomplete PHP objects.
-         */
-        if ('__PHP_Incomplete_Class' === get_class($data)) {
-            return $this->maskNormalized(
-                parent::normalize($data, $depth),
-            );
-        }
-
-        /*
-         * Generic objects are normally left intact by JsonFormatter and are
-         * serialized later by json_encode(). Use Monolog's own JSON encoder
-         * here so public properties, backed enums and other PHP JSON semantics
-         * remain consistent with the native formatter.
-         */
-        return $this->normalizeJsonRepresentation($data);
+        return $this->maskNormalized($normalized);
     }
 
     /**
-     * @return scalar|array<mixed, mixed>|object|null
+     * @return scalar|array<mixed, mixed>|\stdClass|null
      *
      * @throws \JsonException
      */
     private function normalizeJsonRepresentation(
         object $data,
     ): mixed {
-        $json = $this->toJson(
-            $data,
-            true,
-        );
-
         $decoded = json_decode(
-            $json,
-            true,
+            $this->toJson($data, true),
+            false,
             512,
             JSON_THROW_ON_ERROR,
         );
 
-        if (
-            null !== $decoded
-            && !is_scalar($decoded)
-            && !is_array($decoded)
-        ) {
-            throw new \LogicException('JSON object representation must decode to scalar, array, or null.');
-        }
-
-        /*
-         * json_decode() with associative arrays can only produce scalars, null,
-         * or arrays containing further JSON-compatible values.
-         *
-     * @var null|scalar|array<mixed, mixed> $decoded
-         */
-        return $this->maskNormalized($decoded);
+        return $this->maskDecodedJson($decoded);
     }
 
     /**
-     * @param scalar|array<mixed, mixed>|object|null $data
+     * @return scalar|array<mixed, mixed>|\stdClass|null
+     */
+    private function maskDecodedJson(
+        mixed $data,
+    ): mixed {
+        if ($data instanceof \stdClass) {
+            $properties = [];
+
+            foreach (get_object_vars($data) as $key => $value) {
+                $properties[$key] = $this->maskDecodedJson($value);
+            }
+
+            $maskedProperties = $this->structuredDataMasker->mask(
+                $properties,
+            );
+
+            if (!is_array($maskedProperties)) {
+                throw new \LogicException('Masked JSON object properties must remain an array.');
+            }
+
+            return (object) $maskedProperties;
+        }
+
+        if (is_array($data)) {
+            $values = [];
+
+            foreach ($data as $key => $value) {
+                $values[$key] = $this->maskDecodedJson($value);
+            }
+
+            return $this->maskNormalized($values);
+        }
+
+        if (
+            null !== $data
+            && !is_scalar($data)
+        ) {
+            throw new \LogicException('Decoded JSON data must contain only objects, arrays, scalars, or null.');
+        }
+
+        return $this->maskNormalized($data);
+    }
+
+    /**
+     * @param scalar|array<mixed, mixed>|null $data
      *
-     * @return scalar|array<mixed, mixed>|object|null
+     * @return scalar|array<mixed, mixed>|null
      */
     private function maskNormalized(
         mixed $data,
@@ -161,17 +122,11 @@ final class SensitiveJsonFormatter extends JsonFormatter
             null !== $masked
             && !is_scalar($masked)
             && !is_array($masked)
-            && !is_object($masked)
         ) {
-            throw new \LogicException('Normalized JSON formatter data must remain scalar, array, object, or null after masking.');
+            throw new \LogicException('Normalized JSON formatter data must remain scalar, array, or null after masking.');
         }
 
-        /*
-         * StructuredDataMasker preserves normalized arrays recursively and
-         * may only replace sensitive scalar values with masked strings.
-         *
-         * @var null|scalar|array<mixed, mixed>|object $masked
-         */
+        /** @var scalar|array<mixed, mixed>|null $masked */
         return $masked;
     }
 }
