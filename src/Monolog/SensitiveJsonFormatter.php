@@ -29,7 +29,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
     }
 
     /**
-     * @return scalar|array<array<mixed>|scalar|object|null>|object|null
+     * @return scalar|array<mixed, mixed>|object|null
      *
      * @throws \JsonException
      */
@@ -111,7 +111,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
     }
 
     /**
-     * @return scalar|array<array<mixed>|scalar|object|null>|object|null
+     * @return scalar|array<mixed, mixed>|object|null
      *
      * @throws \JsonException
      */
@@ -142,15 +142,15 @@ final class SensitiveJsonFormatter extends JsonFormatter
          * json_decode() with associative arrays can only produce scalars, null,
          * or arrays containing further JSON-compatible values.
          *
-         * @var null|scalar|array<array<mixed>|scalar|null> $decoded
+     * @var null|scalar|array<mixed, mixed> $decoded
          */
         return $this->maskNormalized($decoded);
     }
 
     /**
-     * @param scalar|array<array<mixed>|scalar|object|null>|object|null $data
+     * @param scalar|array<mixed, mixed>|object|null $data
      *
-     * @return scalar|array<array<mixed>|scalar|object|null>|object|null
+     * @return scalar|array<mixed, mixed>|object|null
      */
     private function maskNormalized(
         mixed $data,
@@ -170,7 +170,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
          * StructuredDataMasker preserves normalized arrays recursively and
          * may only replace sensitive scalar values with masked strings.
          *
-         * @var null|scalar|array<array<mixed>|scalar|null|object>|object $masked
+         * @var null|scalar|array<mixed, mixed>|object $masked
          */
         return $masked;
     }

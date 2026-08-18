@@ -29,7 +29,7 @@ final class SensitiveLineFormatter extends LineFormatter
     }
 
     /**
-     * @return scalar|array<mixed[]|scalar|null>|null
+     * @return scalar|array<mixed, mixed>|null
      */
     protected function normalize(
         mixed $data,
@@ -68,9 +68,9 @@ final class SensitiveLineFormatter extends LineFormatter
     }
 
     /**
-     * @param scalar|array<mixed[]|scalar|null>|null $data
+     * @param scalar|array<mixed, mixed>|null $data
      *
-     * @return scalar|array<mixed[]|scalar|null>|null
+     * @return scalar|array<mixed, mixed>|null
      */
     private function maskNormalized(mixed $data): mixed
     {
@@ -84,7 +84,7 @@ final class SensitiveLineFormatter extends LineFormatter
             throw new \LogicException('Normalized line formatter data must remain scalar, array, or null after masking.');
         }
 
-        /* @var null|scalar|array<mixed[]|scalar|null> $masked */
+        /* @var null|scalar|array<mixed, mixed> $masked */
         return $masked;
     }
 }

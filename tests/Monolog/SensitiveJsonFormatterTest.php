@@ -174,7 +174,7 @@ final class SensitiveJsonFormatterTest extends TestCase
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<mixed, mixed>
      */
     private function decodeExceptionData(
         string $output,
@@ -208,7 +208,7 @@ final class SensitiveJsonFormatterTest extends TestCase
             );
         }
 
-        /* @var array<string, mixed> $exception */
+        /* @var array<mixed, mixed> $exception */
         return $exception;
     }
 

@@ -163,7 +163,7 @@ final class SensitiveFormatterObjectMaskingTest extends TestCase
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<mixed, mixed>
      *
      * @throws \JsonException
      */
