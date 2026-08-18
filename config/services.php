@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
-use Masked\Detection\ExactValueDetector;
-use Masked\Detection\PaymentCardDetector;
-use Masked\Detection\SensitiveDataMatchNormalizer;
-use Masked\Logging\SensitiveLogger;
-use Masked\Monolog\SensitiveDataProcessor;
-use Masked\Monolog\SensitiveJsonFormatter;
-use Masked\Monolog\SensitiveLineFormatter;
-use Masked\RangeRedactor;
-use Masked\Redactor;
-use Masked\SensitiveDataMasker;
-use Masked\StructuredDataMasker;
+use Masked\Bundle\Detection\ExactValueDetector;
+use Masked\Bundle\Detection\PaymentCardDetector;
+use Masked\Bundle\Detection\SensitiveDataMatchNormalizer;
+use Masked\Bundle\Logging\SensitiveLogger;
+use Masked\Bundle\Monolog\SensitiveDataProcessor;
+use Masked\Bundle\Monolog\SensitiveJsonFormatter;
+use Masked\Bundle\Monolog\SensitiveLineFormatter;
+use Masked\Bundle\RangeRedactor;
+use Masked\Bundle\Redactor;
+use Masked\Bundle\SensitiveDataMasker;
+use Masked\Bundle\StructuredDataMasker;
 
 return static function (ContainerConfigurator $container): void {
     $services = $container->services();

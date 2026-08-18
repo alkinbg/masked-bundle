@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Masked\Monolog;
+namespace Masked\Bundle\Monolog;
 
-use Masked\SensitiveDataMasker;
+use Masked\Bundle\SensitiveDataMasker;
 use Monolog\Formatter\LineFormatter;
 use Monolog\LogRecord;
 

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Masked\Tests\Logging;
+namespace Masked\Bundle\Tests\Logging;
 
-use Masked\Logging\SensitiveLogger;
-use Masked\RangeRedactor;
-use Masked\Redactor;
-use Masked\SensitiveDataMasker;
-use Masked\StructuredDataMasker;
+use Masked\Bundle\Logging\SensitiveLogger;
+use Masked\Bundle\RangeRedactor;
+use Masked\Bundle\Redactor;
+use Masked\Bundle\SensitiveDataMasker;
+use Masked\Bundle\StructuredDataMasker;
 use Monolog\Handler\TestHandler;
 use Monolog\Level;
 use Monolog\Logger;

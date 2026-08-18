@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Masked\Tests\DependencyInjection;
+namespace Masked\Bundle\Tests\DependencyInjection;
 
-use Masked\Logging\SensitiveLogger;
-use Masked\MaskedBundle;
-use Masked\SensitiveDataMasker;
-use Masked\StructuredDataMasker;
+use Masked\Bundle\Logging\SensitiveLogger;
+use Masked\Bundle\MaskedBundle;
+use Masked\Bundle\SensitiveDataMasker;
+use Masked\Bundle\StructuredDataMasker;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

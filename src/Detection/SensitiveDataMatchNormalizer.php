@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Masked\Detection;
+namespace Masked\Bundle\Detection;
 
 final class SensitiveDataMatchNormalizer
 {

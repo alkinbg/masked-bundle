@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Masked;
+namespace Masked\Bundle;
 
-use Masked\Detection\ExactValueDetector;
-use Masked\Detection\PaymentCardDetector;
+use Masked\Bundle\Detection\ExactValueDetector;
+use Masked\Bundle\Detection\PaymentCardDetector;
 
 final readonly class SensitiveDataMasker
 {

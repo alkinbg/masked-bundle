@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Masked\Detection;
+namespace Masked\Bundle\Detection;
 
 /**
  * Represents the byte range of sensitive data detected inside a string.

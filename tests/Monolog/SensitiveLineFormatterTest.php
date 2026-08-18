@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Masked\Tests\Monolog;
+namespace Masked\Bundle\Tests\Monolog;
 
-use Masked\Monolog\SensitiveLineFormatter;
-use Masked\RangeRedactor;
-use Masked\Redactor;
-use Masked\SensitiveDataMasker;
+use Masked\Bundle\Monolog\SensitiveLineFormatter;
+use Masked\Bundle\RangeRedactor;
+use Masked\Bundle\Redactor;
+use Masked\Bundle\SensitiveDataMasker;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversClass;

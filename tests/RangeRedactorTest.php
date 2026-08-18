@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Masked\Tests;
+namespace Masked\Bundle\Tests;
 
-use Masked\Detection\SensitiveDataMatch;
-use Masked\RangeRedactor;
-use Masked\Redactor;
+use Masked\Bundle\Detection\SensitiveDataMatch;
+use Masked\Bundle\RangeRedactor;
+use Masked\Bundle\Redactor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

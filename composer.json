@@ -43,14 +43,14 @@
         "symfony/monolog-bundle": "Required for automatic processor registration in Symfony applications."
     },
     "autoload": {
-        "psr-4": {
-            "Masked\\": "src/"
-        }
+      "psr-4": {
+        "Masked\\Bundle\\": "src/"
+      }
     },
     "autoload-dev": {
-        "psr-4": {
-            "Masked\\Tests\\": "tests/"
-        }
+      "psr-4": {
+        "Masked\\Bundle\\Tests\\": "tests/"
+      }
     },
     "scripts": {
         "format": "php-cs-fixer fix --config=.php-cs-fixer.dist.php",

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Masked\Monolog;
+namespace Masked\Bundle\Monolog;
 
-use Masked\StructuredDataMasker;
+use Masked\Bundle\StructuredDataMasker;
 use Monolog\Formatter\JsonFormatter;
 
 final class SensitiveJsonFormatter extends JsonFormatter

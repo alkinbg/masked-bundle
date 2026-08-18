@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Masked\Tests\Detection;
+namespace Masked\Bundle\Tests\Detection;
 
-use Masked\Detection\SensitiveDataMatch;
-use Masked\Detection\SensitiveDataMatchNormalizer;
+use Masked\Bundle\Detection\SensitiveDataMatch;
+use Masked\Bundle\Detection\SensitiveDataMatchNormalizer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

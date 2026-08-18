@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Masked\Tests\DependencyInjection;
+namespace Masked\Bundle\Tests\DependencyInjection;
 
-use Masked\MaskedBundle;
-use Masked\Monolog\SensitiveJsonFormatter;
-use Masked\Monolog\SensitiveLineFormatter;
-use Masked\SensitiveDataMasker;
-use Masked\StructuredDataMasker;
+use Masked\Bundle\MaskedBundle;
+use Masked\Bundle\Monolog\SensitiveJsonFormatter;
+use Masked\Bundle\Monolog\SensitiveLineFormatter;
+use Masked\Bundle\SensitiveDataMasker;
+use Masked\Bundle\StructuredDataMasker;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversNothing;

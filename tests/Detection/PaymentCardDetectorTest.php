@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Masked\Tests\Detection;
+namespace Masked\Bundle\Tests\Detection;
 
-use Masked\Detection\PaymentCardDetector;
-use Masked\Detection\SensitiveDataMatch;
+use Masked\Bundle\Detection\PaymentCardDetector;
+use Masked\Bundle\Detection\SensitiveDataMatch;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;

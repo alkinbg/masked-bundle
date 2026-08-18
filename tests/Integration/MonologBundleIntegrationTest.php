@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Masked\Tests\Integration;
+namespace Masked\Bundle\Tests\Integration;
 
-use Masked\MaskedBundle;
-use Masked\Monolog\SensitiveJsonFormatter;
-use Masked\Monolog\SensitiveLineFormatter;
+use Masked\Bundle\MaskedBundle;
+use Masked\Bundle\Monolog\SensitiveJsonFormatter;
+use Masked\Bundle\Monolog\SensitiveLineFormatter;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\Attributes\CoversNothing;

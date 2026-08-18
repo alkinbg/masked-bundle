@@ -37,7 +37,7 @@ If the bundle is not registered automatically, add it to
 <?php
 
 return [
-    Masked\MaskedBundle::class => ['all' => true],
+    Masked\Bundle\MaskedBundle::class => ['all' => true],
 ];
 ```
 
@@ -72,7 +72,7 @@ The mask character must contain exactly one valid UTF-8 character.
 strings.
 
 ```php
-use Masked\SensitiveDataMasker;
+use Masked\Bundle\SensitiveDataMasker;
 
 final class PaymentService
 {
@@ -137,7 +137,7 @@ same call.
 arrays.
 
 ```php
-use Masked\StructuredDataMasker;
+use Masked\Bundle\StructuredDataMasker;
 
 $masked = $structuredDataMasker->mask([
     'customer' => [
@@ -196,7 +196,7 @@ It masks the message and structured context before delegating them to any
 PSR-3 logger.
 
 ```php
-use Masked\Logging\SensitiveLogger;
+use Masked\Bundle\Logging\SensitiveLogger;
 use Psr\Log\LoggerInterface;
 
 final class AuthenticationService
@@ -284,7 +284,7 @@ monolog:
         main:
             type: stream
             path: '%kernel.logs_dir%/%kernel.environment%.log'
-            formatter: 'Masked\Monolog\SensitiveLineFormatter'
+            formatter: 'Masked\Bundle\Monolog\SensitiveLineFormatter'
 ```
 
 The formatter delegates normalization and line rendering to Monolog and then
@@ -305,7 +305,7 @@ monolog:
         main:
             type: stream
             path: '%kernel.logs_dir%/%kernel.environment%.json'
-            formatter: 'Masked\Monolog\SensitiveJsonFormatter'
+            formatter: 'Masked\Bundle\Monolog\SensitiveJsonFormatter'
 ```
 
 The formatter masks normalized log data and JSON object representations before
@@ -322,13 +322,13 @@ onto handlers automatically.
 Use:
 
 ```text
-Masked\Monolog\SensitiveLineFormatter
+Masked\Bundle\Monolog\SensitiveLineFormatter
 ```
 
 for line-oriented output, or:
 
 ```text
-Masked\Monolog\SensitiveJsonFormatter
+Masked\Bundle\Monolog\SensitiveJsonFormatter
 ```
 
 for JSON output.
@@ -340,17 +340,17 @@ Custom Monolog formatters are not automatically replaced or decorated.
 The main application-level services are:
 
 ```text
-Masked\SensitiveDataMasker
-Masked\StructuredDataMasker
-Masked\Logging\SensitiveLogger
+Masked\Bundle\SensitiveDataMasker
+Masked\Bundle\StructuredDataMasker
+Masked\Bundle\Logging\SensitiveLogger
 ```
 
 Monolog integrations are:
 
 ```text
-Masked\Monolog\SensitiveDataProcessor
-Masked\Monolog\SensitiveLineFormatter
-Masked\Monolog\SensitiveJsonFormatter
+Masked\Bundle\Monolog\SensitiveDataProcessor
+Masked\Bundle\Monolog\SensitiveLineFormatter
+Masked\Bundle\Monolog\SensitiveJsonFormatter
 ```
 
 Lower-level detection and range-redaction components are part of the bundle

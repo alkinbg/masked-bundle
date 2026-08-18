@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Masked\Logging;
+namespace Masked\Bundle\Logging;
 
-use Masked\SensitiveDataMasker;
-use Masked\StructuredDataMasker;
+use Masked\Bundle\SensitiveDataMasker;
+use Masked\Bundle\StructuredDataMasker;
 use Psr\Log\LoggerInterface;
 
 final readonly class SensitiveLogger

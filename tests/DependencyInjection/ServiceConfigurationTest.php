@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Masked\Tests\DependencyInjection;
+namespace Masked\Bundle\Tests\DependencyInjection;
 
-use Masked\Detection\ExactValueDetector;
-use Masked\Detection\PaymentCardDetector;
-use Masked\Detection\SensitiveDataMatchNormalizer;
-use Masked\MaskedBundle;
-use Masked\Monolog\SensitiveDataProcessor;
-use Masked\RangeRedactor;
-use Masked\Redactor;
-use Masked\SensitiveDataMasker;
-use Masked\StructuredDataMasker;
+use Masked\Bundle\Detection\ExactValueDetector;
+use Masked\Bundle\Detection\PaymentCardDetector;
+use Masked\Bundle\Detection\SensitiveDataMatchNormalizer;
+use Masked\Bundle\MaskedBundle;
+use Masked\Bundle\Monolog\SensitiveDataProcessor;
+use Masked\Bundle\RangeRedactor;
+use Masked\Bundle\Redactor;
+use Masked\Bundle\SensitiveDataMasker;
+use Masked\Bundle\StructuredDataMasker;
 use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversNothing;

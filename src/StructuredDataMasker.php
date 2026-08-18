@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Masked;
+namespace Masked\Bundle;
 
 final readonly class StructuredDataMasker
 {
