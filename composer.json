@@ -26,10 +26,12 @@
     "require-dev": {
         "monolog/monolog": "^3.6",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^12.5"
+        "phpunit/phpunit": "^12.5",
+        "symfony/monolog-bundle": "^4.0"
     },
     "suggest": {
-        "monolog/monolog": "Required to use the Monolog sensitive data processor."
+        "monolog/monolog": "Required to use the Monolog sensitive data processor directly.",
+        "symfony/monolog-bundle": "Required for automatic processor registration in Symfony applications."
     },
     "autoload": {
         "psr-4": {
