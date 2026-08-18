@@ -287,11 +287,13 @@ monolog:
             formatter: 'Alkin\MaskedBundle\Monolog\SensitiveLineFormatter'
 ```
 
-The formatter preserves Monolog's line-formatting behavior while masking
-sensitive information in normalized log data before it is rendered.
+The formatter delegates normalization and line rendering to Monolog and then
+masks sensitive information in the resulting line before it is returned.
 
-Exception messages and normalized object data are therefore protected without
-mutating the original objects.
+This preserves Monolog's native `LineFormatter` behavior while protecting
+sensitive data that appears in messages, exceptions, context, extra data or
+rendered object representations, without mutating the original log record or
+its objects.
 
 ## SensitiveJsonFormatter
 
