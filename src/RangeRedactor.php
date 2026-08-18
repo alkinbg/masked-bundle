@@ -9,6 +9,14 @@ use Masked\Bundle\Detection\SensitiveDataMatchNormalizer;
 
 final readonly class RangeRedactor
 {
+    /**
+     * Bounds the number of match ranges passed to normalization.
+     *
+     * If more valid ranges are supplied, the complete input is redacted
+     * instead of sorting an unbounded match list.
+     */
+    private const int MAX_NORMALIZABLE_MATCH_COUNT = 10000;
+
     public function __construct(
         private Redactor $redactor = new Redactor(),
         private SensitiveDataMatchNormalizer $matchNormalizer =
@@ -19,10 +27,13 @@ final readonly class RangeRedactor
     /**
      * Redacts the supplied byte ranges while preserving all other content.
      *
-     * All ranges are validated against the original input before any
-     * replacement takes place. Overlapping ranges are normalized and the
-     * resulting ranges are applied from right to left so changes in byte
-     * length cannot invalidate offsets that still need to be processed.
+     * All ranges are validated against the original input before redaction
+     * takes place. Overlapping ranges are normalized, then the result is built
+     * from left to right so each preserved or sensitive input chunk is copied
+     * at most once.
+     *
+     * If the match-count safety limit is exceeded, the complete input is
+     * redacted rather than attempting to normalize an unbounded match list.
      *
      * @param list<SensitiveDataMatch> $matches
      *
@@ -37,15 +48,35 @@ final readonly class RangeRedactor
             return $value;
         }
 
+        $valueByteLength = strlen($value);
+
         $this->validateMatches(
-            valueByteLength: strlen($value),
+            valueByteLength: $valueByteLength,
             matches: $matches,
         );
 
-        $matches = $this->matchNormalizer->normalize($matches);
+        if (
+            count($matches)
+            > self::MAX_NORMALIZABLE_MATCH_COUNT
+        ) {
+            return $this->redactor->redact($value);
+        }
 
-        for ($index = count($matches) - 1; $index >= 0; --$index) {
-            $match = $matches[$index];
+        $matches = $this->matchNormalizer->normalize(
+            $matches,
+        );
+
+        $chunks = [];
+        $cursorByteOffset = 0;
+
+        foreach ($matches as $match) {
+            if ($match->byteOffset > $cursorByteOffset) {
+                $chunks[] = substr(
+                    $value,
+                    $cursorByteOffset,
+                    $match->byteOffset - $cursorByteOffset,
+                );
+            }
 
             $sensitiveValue = substr(
                 $value,
@@ -53,15 +84,22 @@ final readonly class RangeRedactor
                 $match->byteLength,
             );
 
-            $value = substr_replace(
+            $chunks[] = $this->redactor->redact(
+                $sensitiveValue,
+            );
+
+            $cursorByteOffset =
+                $match->endByteOffsetExclusive();
+        }
+
+        if ($cursorByteOffset < $valueByteLength) {
+            $chunks[] = substr(
                 $value,
-                $this->redactor->redact($sensitiveValue),
-                $match->byteOffset,
-                $match->byteLength,
+                $cursorByteOffset,
             );
         }
 
-        return $value;
+        return implode('', $chunks);
     }
 
     /**
@@ -72,7 +110,10 @@ final readonly class RangeRedactor
         array $matches,
     ): void {
         foreach ($matches as $match) {
-            if ($match->endByteOffsetExclusive() > $valueByteLength) {
+            if (
+                $match->endByteOffsetExclusive()
+                > $valueByteLength
+            ) {
                 throw new \InvalidArgumentException('Sensitive data match exceeds the bounds of the input value.');
             }
         }

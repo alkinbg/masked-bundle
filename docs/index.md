@@ -288,6 +288,9 @@ Automatic detection is heuristic.
 
 Applications should explicitly provide known secrets instead of assuming that
 all sensitive information can be recognized automatically.
+Range redaction bounds normalization to 10,000 supplied match ranges. All
+ranges are validated first; if more valid ranges are supplied, the complete
+input is redacted rather than sorting an unbounded match list.
 
 Custom processors, handlers and formatters can introduce or serialize new data
 after MaskedBundle has processed a record. Applications with custom logging

@@ -396,6 +396,9 @@ on free-text detection.
 Explicit sensitive values are deliberately scoped to individual masking or
 logging operations. MaskedBundle does not maintain a process-wide secret
 registry.
+Range redaction bounds normalization to 10,000 supplied match ranges. All
+ranges are validated first; if more valid ranges are supplied, the complete
+input is redacted rather than sorting an unbounded match list.
 
 `StructuredDataMasker` intentionally does not inspect private or protected
 state inside arbitrary objects.

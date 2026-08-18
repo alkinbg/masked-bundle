@@ -194,4 +194,73 @@ final class RangeRedactorTest extends TestCase
             new RangeRedactor()->redact($value, $matches),
         );
     }
+
+    public function testRedactsManyRangesWhilePreservingInterveningContent(): void
+    {
+        $value = str_repeat(
+            'aX',
+            1000,
+        );
+
+        $matches = [];
+
+        for ($index = 0; $index < 1000; ++$index) {
+            $matches[] = new SensitiveDataMatch(
+                byteOffset: $index * 2,
+                byteLength: 1,
+            );
+        }
+
+        self::assertSame(
+            str_repeat('█X', 1000),
+            new RangeRedactor()->redact(
+                $value,
+                $matches,
+            ),
+        );
+    }
+
+    public function testProcessesMatchCountAtSafetyLimit(): void
+    {
+        $match = new SensitiveDataMatch(
+            byteOffset: 0,
+            byteLength: 1,
+        );
+
+        $matches = array_fill(
+            0,
+            10000,
+            $match,
+        );
+
+        self::assertSame(
+            '█ecret',
+            new RangeRedactor()->redact(
+                'secret',
+                $matches,
+            ),
+        );
+    }
+
+    public function testFailsClosedWhenMatchCountSafetyLimitIsExceeded(): void
+    {
+        $match = new SensitiveDataMatch(
+            byteOffset: 0,
+            byteLength: 1,
+        );
+
+        $matches = array_fill(
+            0,
+            10001,
+            $match,
+        );
+
+        self::assertSame(
+            str_repeat('█', 6),
+            new RangeRedactor()->redact(
+                'secret',
+                $matches,
+            ),
+        );
+    }
 }
