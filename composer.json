@@ -31,7 +31,7 @@
         "symfony/monolog-bundle": "^4.0"
     },
     "suggest": {
-        "monolog/monolog": "Required to use the Monolog sensitive data processor directly.",
+        "monolog/monolog": "Required to use the Monolog processor and formatter integrations.",
         "symfony/monolog-bundle": "Required for automatic processor registration in Symfony applications."
     },
     "autoload": {

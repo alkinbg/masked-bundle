@@ -2,9 +2,17 @@
 
 Sensitive data detection and masking for Symfony applications.
 
-MaskedBundle provides reusable masking services for Symfony applications and optional Monolog integration for masking sensitive data in logs and diagnostic output.
+MaskedBundle provides reusable masking services for Symfony applications and
+optional Monolog integration for masking sensitive data in logs and diagnostic
+output.
 
-The current detector focuses on payment card numbers found in free text.
+It supports two complementary approaches:
+
+- automatic detection for sensitive data that can be identified with sufficient confidence;
+- explicit sensitive values supplied by the application when automatic detection is not appropriate.
+
+The current automatic detector focuses on payment card numbers found in free
+text.
 
 ## Requirements
 
@@ -22,7 +30,8 @@ Install the bundle with Composer:
 composer require alkinbg/masked-bundle
 ```
 
-If the bundle is not registered automatically, add it to `config/bundles.php`:
+If the bundle is not registered automatically, add it to
+`config/bundles.php`:
 
 ```php
 <?php
@@ -55,11 +64,12 @@ masked:
     mask_character: '*'
 ```
 
-The mask character must contain exactly one character.
+The mask character must contain exactly one valid UTF-8 character.
 
 ## Masking strings
 
-`SensitiveDataMasker` is the primary service for masking sensitive data in strings.
+`SensitiveDataMasker` is the primary service for masking sensitive data in
+strings.
 
 ```php
 use Alkin\MaskedBundle\SensitiveDataMasker;
@@ -88,9 +98,43 @@ Card: ████████████████
 
 Strings without detected sensitive data are returned unchanged.
 
+## Explicit sensitive values
+
+Not every secret can or should be detected automatically.
+
+Passwords, API tokens, refresh tokens and application-specific credentials are
+examples of values that are better supplied explicitly.
+
+`SensitiveDataMasker` accepts a list of sensitive values for the current
+operation:
+
+```php
+$token = 'secret-access-token';
+
+$masked = $sensitiveDataMasker->mask(
+    'Authentication failed for token ' . $token,
+    sensitiveValues: [$token],
+);
+```
+
+Result:
+
+```text
+Authentication failed for token ███████████████████
+```
+
+Explicit values are matched exactly and case-sensitively.
+
+They are supplied per operation. MaskedBundle does not keep them in a shared
+static or mutable secret registry.
+
+Automatic detection and explicit sensitive values can be used together in the
+same call.
+
 ## Masking structured data
 
-`StructuredDataMasker` recursively processes strings and integers inside arrays.
+`StructuredDataMasker` recursively processes strings and integers inside
+arrays.
 
 ```php
 use Alkin\MaskedBundle\StructuredDataMasker;
@@ -104,7 +148,26 @@ $masked = $structuredDataMasker->mask([
 
 Array keys are also checked for sensitive data.
 
-Objects are intentionally preserved and are not traversed or mutated.
+Explicit values can be supplied in the same way:
+
+```php
+$token = 'secret-access-token';
+
+$masked = $structuredDataMasker->mask(
+    [
+        'authentication' => [
+            'token' => $token,
+        ],
+    ],
+    sensitiveValues: [$token],
+);
+```
+
+Objects are intentionally preserved and are not traversed or mutated by
+`StructuredDataMasker`.
+
+Recursive arrays and excessive nesting are handled defensively so malformed or
+cyclic data cannot cause unbounded recursion.
 
 ## Payment card detection
 
@@ -119,15 +182,65 @@ Currently it:
 - supports multiple payment-card numbers in the same string;
 - operates safely when surrounding text contains multibyte characters.
 
-The 13–19 digit range is a detector boundary, not a claim that it represents every payment-card identifier permitted by every payment-card standard.
+The 13–19 digit range is a detector boundary, not a claim that it represents
+every payment-card identifier permitted by every payment-card standard.
 
 MaskedBundle does not perform card-brand, BIN or IIN identification.
 
+## SensitiveLogger
+
+`SensitiveLogger` is the recommended integration when an application knows
+specific sensitive values at the point where a log entry is created.
+
+It masks the message and structured context before delegating them to any
+PSR-3 logger.
+
+```php
+use Alkin\MaskedBundle\Logging\SensitiveLogger;
+use Psr\Log\LoggerInterface;
+
+final class AuthenticationService
+{
+    public function __construct(
+        private readonly LoggerInterface $logger,
+        private readonly SensitiveLogger $sensitiveLogger,
+    ) {
+    }
+
+    public function reportFailure(
+        string $token,
+        string $username,
+    ): void {
+        $this->sensitiveLogger->log(
+            $this->logger,
+            'warning',
+            'Authentication failed for token ' . $token,
+            [
+                'token' => $token,
+                'user' => $username,
+            ],
+            sensitiveValues: [$token],
+        );
+    }
+}
+```
+
+The sensitive values exist only for that call. No shared logger state is
+modified.
+
+Automatic detection is also applied, so explicitly supplied secrets and
+detectable payment-card numbers can be protected in the same log operation.
+
+Arbitrary objects inside the context are intentionally preserved. Object
+serialization remains the responsibility of downstream processors and
+formatters.
+
 ## Monolog processor
 
-When Monolog and Symfony MonologBundle are available, MaskedBundle automatically registers its sensitive data processor with MonologBundle.
+When Monolog and Symfony MonologBundle are available, MaskedBundle registers
+its sensitive data processor with MonologBundle.
 
-The processor masks sensitive data in:
+The processor automatically masks detectable sensitive data in:
 
 - log messages;
 - scalar and array values in `context`;
@@ -144,21 +257,26 @@ $logger->info(
 );
 ```
 
-Both detected card numbers are masked before the record continues through the Monolog pipeline.
+Both detected card numbers are masked before the record continues through the
+Monolog pipeline.
 
-### Objects and exceptions
+The processor does not maintain dynamic explicit secrets. Use
+`SensitiveLogger` when known sensitive values need to be supplied for a
+specific log operation.
+
+### Objects
 
 Objects are deliberately preserved by the processor.
 
-This includes `Throwable` instances.
+Preserving objects avoids changing their identity or behavior before other
+processors and handlers receive them.
 
-Preserving objects avoids changing their identity or behavior before other processors and handlers receive them. However, sensitive data contained inside an exception message can become visible later when a formatter converts the exception to text or JSON.
-
-For this reason MaskedBundle provides formatter-aware integrations.
+Because objects may later be normalized or serialized by a formatter,
+MaskedBundle also provides formatter-aware integrations.
 
 ## SensitiveLineFormatter
 
-Use `SensitiveLineFormatter` when a handler uses line-oriented log output and exception messages may contain sensitive data.
+Use `SensitiveLineFormatter` for line-oriented log output:
 
 ```yaml
 monolog:
@@ -169,9 +287,11 @@ monolog:
             formatter: 'Alkin\MaskedBundle\Monolog\SensitiveLineFormatter'
 ```
 
-The formatter preserves Monolog's native `LineFormatter` exception handling and masks sensitive data after the exception has been normalized.
+The formatter preserves Monolog's line-formatting behavior while masking
+sensitive information in normalized log data before it is rendered.
 
-The original `Throwable` object is not modified.
+Exception messages and normalized object data are therefore protected without
+mutating the original objects.
 
 ## SensitiveJsonFormatter
 
@@ -186,15 +306,16 @@ monolog:
             formatter: 'Alkin\MaskedBundle\Monolog\SensitiveJsonFormatter'
 ```
 
-The formatter masks normalized exception data before JSON serialization.
+The formatter masks normalized log data and JSON object representations before
+the complete log record is serialized.
 
-This avoids post-processing an already encoded JSON string and preserves valid JSON output.
+This avoids post-processing an already encoded JSON string and preserves valid
+JSON output.
 
 ## Choosing a Monolog formatter
 
-The sensitive formatters are registered as Symfony services but are not forced onto handlers automatically.
-
-Choose the formatter explicitly for handlers where exception or formatter-level masking is required.
+The sensitive formatters are registered as Symfony services but are not forced
+onto handlers automatically.
 
 Use:
 
@@ -219,6 +340,7 @@ The main application-level services are:
 ```text
 Alkin\MaskedBundle\SensitiveDataMasker
 Alkin\MaskedBundle\StructuredDataMasker
+Alkin\MaskedBundle\Logging\SensitiveLogger
 ```
 
 Monolog integrations are:
@@ -229,7 +351,9 @@ Alkin\MaskedBundle\Monolog\SensitiveLineFormatter
 Alkin\MaskedBundle\Monolog\SensitiveJsonFormatter
 ```
 
-Lower-level detection and range-redaction components are available internally to the bundle architecture, but most applications should start with `SensitiveDataMasker` or `StructuredDataMasker`.
+Lower-level detection and range-redaction components are part of the bundle
+architecture, but most applications should start with `SensitiveDataMasker`,
+`StructuredDataMasker` or `SensitiveLogger`.
 
 ## Security considerations
 
@@ -243,13 +367,26 @@ It is not:
 - a substitute for access control;
 - a guarantee of PCI DSS compliance.
 
-Automatic detection is heuristic by design. Applications handling known sensitive structured fields should not rely exclusively on free-text detection as their only security control.
+Automatic detection is heuristic by design.
 
-The Monolog processor intentionally does not traverse arbitrary objects.
+Applications handling known passwords, tokens, credentials or other
+application-specific secrets should supply them explicitly instead of relying
+on free-text detection.
 
-`SensitiveLineFormatter` and `SensitiveJsonFormatter` specifically protect Monolog exception normalization. They do not provide a general guarantee that arbitrary custom objects or custom formatters cannot expose sensitive data.
+Explicit sensitive values are deliberately scoped to individual masking or
+logging operations. MaskedBundle does not maintain a process-wide secret
+registry.
 
-Applications using custom formatters should review their serialization behavior separately.
+`StructuredDataMasker` intentionally does not inspect private or protected
+state inside arbitrary objects.
+
+The Monolog processor also preserves arbitrary objects. Sensitive formatters
+protect the normalized representations they handle, but custom processors,
+handlers or formatters may introduce or serialize additional data after
+masking has occurred.
+
+Applications with custom logging pipelines should review those components
+separately.
 
 ## Acknowledgements
 
@@ -276,8 +413,8 @@ Its architecture and implementation are new, but the original project's
 philosophy remains an important part of its foundation.
 
 My sincere thanks to КТ
-([Kaloyan K. Tsvetkov](https://github.com/kktsvetkov)) for the original idea, 
-for creating Fuko\Masked, and, more importantly, for the inspiration that 
+([Kaloyan K. Tsvetkov](https://github.com/kktsvetkov)) for the original idea,
+for creating Fuko\Masked, and, more importantly, for the inspiration that
 eventually led to this project.
 
 ## Development
