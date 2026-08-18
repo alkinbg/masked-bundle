@@ -11,6 +11,32 @@ permissions:
   contents: read
 
 jobs:
+  code-style:
+    name: Code style
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate Composer configuration
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-progress --no-interaction
+
+      - name: Check code style
+        run: composer format:check
+
   quality:
     name: PHP ${{ matrix.php }} / ${{ matrix.dependencies }}
     runs-on: ubuntu-24.04
@@ -49,9 +75,6 @@ jobs:
 
       - name: Install dependencies
         run: composer update --prefer-dist --no-progress --no-interaction ${{ matrix.composer_options }}
-
-      - name: Check code style
-        run: composer format:check
 
       - name: Run tests
         run: composer test
