@@ -30,8 +30,11 @@ final readonly class SensitiveLogger
     public function log(
         LoggerInterface $logger,
         mixed $level,
+        #[\SensitiveParameter]
         string|\Stringable $message,
+        #[\SensitiveParameter]
         array $context = [],
+        #[\SensitiveParameter]
         array $sensitiveValues = [],
     ): void {
         $maskedMessage = $this->sensitiveDataMasker->mask(

@@ -31,6 +31,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
      */
     #[\Override]
     protected function normalize(
+        #[\SensitiveParameter]
         mixed $data,
         int $depth = 0,
     ): mixed {
@@ -52,6 +53,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
      * @throws \JsonException
      */
     private function normalizeJsonRepresentation(
+        #[\SensitiveParameter]
         object $data,
     ): mixed {
         $decoded = json_decode(
@@ -68,6 +70,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
      * @return scalar|array<mixed, mixed>|\stdClass|null
      */
     private function maskDecodedJson(
+        #[\SensitiveParameter]
         mixed $data,
     ): mixed {
         if ($data instanceof \stdClass) {
@@ -114,6 +117,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
      * @return scalar|array<mixed, mixed>|null
      */
     private function maskNormalized(
+        #[\SensitiveParameter]
         mixed $data,
     ): mixed {
         $masked = $this->structuredDataMasker->mask($data);

@@ -282,6 +282,14 @@ Custom processors, handlers and formatters can introduce or serialize new data
 after MaskedBundle has processed a record. Applications with custom logging
 pipelines should review those components independently.
 
+MaskedBundle marks package-owned parameters that may contain unmasked sensitive
+data with PHP's `#[\\SensitiveParameter]` attribute so those argument values are
+redacted from stack frames owned by the bundle.
+
+The attribute only protects the parameter at the frame where it is declared.
+Applications that require exception traces to contain no function arguments at
+all should additionally configure PHP with `zend.exception_ignore_args=1`.
+
 ## Project lineage
 
 MaskedBundle is a modern Symfony-oriented project inspired by

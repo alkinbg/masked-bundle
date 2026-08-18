@@ -27,8 +27,10 @@ final class SensitiveLineFormatter extends LineFormatter
         );
     }
 
-    public function format(LogRecord $record): string
-    {
+    public function format(
+        #[\SensitiveParameter]
+        LogRecord $record,
+    ): string {
         return $this->sensitiveDataMasker->mask(
             parent::format($record),
         );

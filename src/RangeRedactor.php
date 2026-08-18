@@ -28,8 +28,11 @@ final readonly class RangeRedactor
      *
      * @throws \InvalidArgumentException when a match exceeds the input bounds
      */
-    public function redact(string $value, array $matches): string
-    {
+    public function redact(
+        #[\SensitiveParameter]
+        string $value,
+        array $matches,
+    ): string {
         if ([] === $matches) {
             return $value;
         }

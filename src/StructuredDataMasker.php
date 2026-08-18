@@ -8,11 +8,9 @@ final readonly class StructuredDataMasker
 {
     private const int MAX_ARRAY_NESTING_DEPTH = 32;
 
-    private const string RECURSIVE_ARRAY_PLACEHOLDER =
-        '[recursive array]';
+    private const string RECURSIVE_ARRAY_PLACEHOLDER = '[recursive array]';
 
-    private const string MAXIMUM_NESTING_DEPTH_PLACEHOLDER =
-        '[maximum nesting depth exceeded]';
+    private const string MAXIMUM_NESTING_DEPTH_PLACEHOLDER = '[maximum nesting depth exceeded]';
 
     public function __construct(
         private SensitiveDataMasker $sensitiveDataMasker =
@@ -24,7 +22,9 @@ final readonly class StructuredDataMasker
      * @param list<string> $sensitiveValues
      */
     public function mask(
+        #[\SensitiveParameter]
         mixed $value,
+        #[\SensitiveParameter]
         array $sensitiveValues = [],
     ): mixed {
         $this->validateSensitiveValues($sensitiveValues);
@@ -42,7 +42,9 @@ final readonly class StructuredDataMasker
      * @param array<string, true> $activeArrayReferenceIds
      */
     private function maskValue(
+        #[\SensitiveParameter]
         mixed $value,
+        #[\SensitiveParameter]
         array $sensitiveValues,
         array $activeArrayReferenceIds,
         int $arrayDepth,
@@ -93,7 +95,9 @@ final readonly class StructuredDataMasker
      * @return array<int|string, mixed>
      */
     private function maskArray(
+        #[\SensitiveParameter]
         array $value,
+        #[\SensitiveParameter]
         array $sensitiveValues,
         array $activeArrayReferenceIds,
         int $arrayDepth,
@@ -159,7 +163,9 @@ final readonly class StructuredDataMasker
      * @param list<string> $sensitiveValues
      */
     private function maskArrayKey(
+        #[\SensitiveParameter]
         int|string $key,
+        #[\SensitiveParameter]
         array $sensitiveValues,
     ): int|string {
         $keyAsString = (string) $key;
@@ -202,6 +208,7 @@ final readonly class StructuredDataMasker
      * @param list<string> $sensitiveValues
      */
     private function validateSensitiveValues(
+        #[\SensitiveParameter]
         array $sensitiveValues,
     ): void {
         foreach ($sensitiveValues as $sensitiveValue) {

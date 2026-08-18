@@ -22,7 +22,9 @@ final readonly class SensitiveDataMasker
      * @param list<string> $sensitiveValues
      */
     public function mask(
+        #[\SensitiveParameter]
         string $value,
+        #[\SensitiveParameter]
         array $sensitiveValues = [],
     ): string {
         $matches = [

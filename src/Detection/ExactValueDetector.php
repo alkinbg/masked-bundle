@@ -25,7 +25,9 @@ final readonly class ExactValueDetector
      * @return list<SensitiveDataMatch>
      */
     public function detect(
+        #[\SensitiveParameter]
         string $value,
+        #[\SensitiveParameter]
         array $sensitiveValues,
     ): array {
         if ([] === $sensitiveValues) {

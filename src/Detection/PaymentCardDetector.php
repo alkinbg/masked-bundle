@@ -48,8 +48,10 @@ final readonly class PaymentCardDetector
      *
      * @throws \RuntimeException when the input cannot be scanned safely
      */
-    public function detect(string $value): array
-    {
+    public function detect(
+        #[\SensitiveParameter]
+        string $value,
+    ): array {
         if ('' === $value) {
             return [];
         }
@@ -103,8 +105,10 @@ final readonly class PaymentCardDetector
      *
      * @throws \RuntimeException when the sequence cannot be scanned safely
      */
-    private function detectInSequence(string $sequence): array
-    {
+    private function detectInSequence(
+        #[\SensitiveParameter]
+        string $sequence,
+    ): array {
         // Keep ASCII digit semantics consistent with SEQUENCE_PATTERN.
         $result = preg_match_all(
             '~[0-9]+~',
@@ -190,8 +194,10 @@ final readonly class PaymentCardDetector
         return $matches;
     }
 
-    private function isValidPanCandidate(string $candidate): bool
-    {
+    private function isValidPanCandidate(
+        #[\SensitiveParameter]
+        string $candidate,
+    ): bool {
         $pan = str_replace(
             [
                 ' ',
@@ -223,8 +229,10 @@ final readonly class PaymentCardDetector
         return $this->passesLuhn($pan);
     }
 
-    private function consistsOfSingleRepeatedDigit(string $pan): bool
-    {
+    private function consistsOfSingleRepeatedDigit(
+        #[\SensitiveParameter]
+        string $pan,
+    ): bool {
         $firstDigit = $pan[0];
         $length = strlen($pan);
 
@@ -237,8 +245,10 @@ final readonly class PaymentCardDetector
         return true;
     }
 
-    private function passesLuhn(string $pan): bool
-    {
+    private function passesLuhn(
+        #[\SensitiveParameter]
+        string $pan,
+    ): bool {
         $sum = 0;
         $length = strlen($pan);
         $parity = $length % 2;

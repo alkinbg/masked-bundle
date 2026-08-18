@@ -16,8 +16,10 @@ final readonly class SensitiveDataProcessor
     ) {
     }
 
-    public function __invoke(LogRecord $record): LogRecord
-    {
+    public function __invoke(
+        #[\SensitiveParameter]
+        LogRecord $record,
+    ): LogRecord {
         return $record->with(
             message: $this->sensitiveDataMasker->mask(
                 $record->message,

@@ -26,6 +26,7 @@ final readonly class Redactor
     }
 
     public function redact(
+        #[\SensitiveParameter]
         string $value,
         int $visibleTrailingCharacters = 0,
     ): string {
