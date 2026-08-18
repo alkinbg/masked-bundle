@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Alkin\MaskedBundle\Detection\ExactValueDetector;
 use Alkin\MaskedBundle\Detection\PaymentCardDetector;
 use Alkin\MaskedBundle\Detection\SensitiveDataMatchNormalizer;
 use Alkin\MaskedBundle\Monolog\SensitiveDataProcessor;
@@ -27,6 +28,11 @@ return static function (ContainerConfigurator $container): void
 			service(SensitiveDataMatchNormalizer::class),
 		]);
 
+	$services->set(ExactValueDetector::class)
+		->args([
+			service(SensitiveDataMatchNormalizer::class),
+		]);
+
 	$services->set(RangeRedactor::class)
 		->args([
 			service(Redactor::class),
@@ -36,6 +42,7 @@ return static function (ContainerConfigurator $container): void
 	$services->set(SensitiveDataMasker::class)
 		->args([
 			service(PaymentCardDetector::class),
+			service(ExactValueDetector::class),
 			service(RangeRedactor::class),
 		]);
 

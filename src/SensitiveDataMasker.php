@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Alkin\MaskedBundle;
 
+use Alkin\MaskedBundle\Detection\ExactValueDetector;
 use Alkin\MaskedBundle\Detection\PaymentCardDetector;
 
 final readonly class SensitiveDataMasker
@@ -11,13 +12,26 @@ final readonly class SensitiveDataMasker
 	public function __construct(
 		private PaymentCardDetector $paymentCardDetector =
 		new PaymentCardDetector(),
+		private ExactValueDetector $exactValueDetector =
+		new ExactValueDetector(),
 		private RangeRedactor $rangeRedactor = new RangeRedactor(),
 	) {
 	}
 
-	public function mask(string $value): string
-	{
-		$matches = $this->paymentCardDetector->detect($value);
+	/**
+	 * @param list<string> $sensitiveValues
+	 */
+	public function mask(
+		string $value,
+		array $sensitiveValues = [],
+	): string {
+		$matches = [
+			...$this->paymentCardDetector->detect($value),
+			...$this->exactValueDetector->detect(
+				$value,
+				$sensitiveValues,
+			),
+		];
 
 		return $this->rangeRedactor->redact(
 			$value,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Alkin\MaskedBundle\Tests\DependencyInjection;
 
+use Alkin\MaskedBundle\Detection\ExactValueDetector;
 use Alkin\MaskedBundle\Detection\PaymentCardDetector;
 use Alkin\MaskedBundle\Detection\SensitiveDataMatchNormalizer;
 use Alkin\MaskedBundle\MaskedBundle;
@@ -65,10 +66,19 @@ final class ServiceConfigurationTest extends TestCase
 		self::assertEquals(
 			[
 				new Reference(PaymentCardDetector::class),
+				new Reference(ExactValueDetector::class),
 				new Reference(RangeRedactor::class),
 			],
 			$container
 				->getDefinition(SensitiveDataMasker::class)
+				->getArguments(),
+		);
+		self::assertEquals(
+			[
+				new Reference(SensitiveDataMatchNormalizer::class),
+			],
+			$container
+				->getDefinition(ExactValueDetector::class)
 				->getArguments(),
 		);
 		self::assertEquals(
@@ -90,6 +100,16 @@ final class ServiceConfigurationTest extends TestCase
 			],
 			$container
 				->getDefinition(SensitiveDataProcessor::class)
+				->getArguments(),
+		);
+		self::assertEquals(
+			[
+				new Reference(PaymentCardDetector::class),
+				new Reference(ExactValueDetector::class),
+				new Reference(RangeRedactor::class),
+			],
+			$container
+				->getDefinition(SensitiveDataMasker::class)
 				->getArguments(),
 		);
 		self::assertSame(
