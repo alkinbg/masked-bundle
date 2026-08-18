@@ -17,6 +17,15 @@ final class MaskedBundle extends AbstractBundle
 			->children()
 			->stringNode('mask_character')
 			->defaultValue('█')
+			->validate()
+			->ifTrue(
+				static fn(string $value): bool => !mb_check_encoding($value, 'UTF-8')
+					|| mb_strlen($value, 'UTF-8') !== 1,
+			)
+			->thenInvalid(
+				'The "mask_character" option must contain exactly one valid UTF-8 character.',
+			)
+			->end()
 			->end()
 			->end();
 	}
