@@ -84,7 +84,7 @@ final class SensitiveLineFormatter extends LineFormatter
             throw new \LogicException('Normalized line formatter data must remain scalar, array, or null after masking.');
         }
 
-        /* @var null|scalar|array<mixed, mixed> $masked */
+        /** @var scalar|array<mixed, mixed>|null $masked */
         return $masked;
     }
 }

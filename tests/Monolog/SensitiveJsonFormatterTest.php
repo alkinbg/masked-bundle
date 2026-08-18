@@ -208,7 +208,7 @@ final class SensitiveJsonFormatterTest extends TestCase
             );
         }
 
-        /* @var array<mixed, mixed> $exception */
+        /** @var array<mixed, mixed> $exception */
         return $exception;
     }
 

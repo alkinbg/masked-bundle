@@ -182,7 +182,7 @@ final class SensitiveFormatterObjectMaskingTest extends TestCase
             );
         }
 
-        /* @var array<string, mixed> $decoded */
+        /** @var array<string, mixed> $decoded */
         return $decoded;
     }
 }
