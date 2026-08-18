@@ -22,6 +22,10 @@ text.
 
 Monolog integration is optional.
 
+The Monolog integrations are tested with `monolog/monolog ^3.6` and are
+registered only when Monolog API 3 is available. Other Monolog major APIs are
+intentionally not activated until compatibility has been explicitly verified.
+
 ## Installation
 
 Install the bundle with Composer:
@@ -237,8 +241,9 @@ formatters.
 
 ## Monolog processor
 
-When Monolog and Symfony MonologBundle are available, MaskedBundle registers
-its sensitive data processor with MonologBundle.
+When a compatible Monolog 3 installation and Symfony MonologBundle are
+available, MaskedBundle registers its sensitive data processor with
+MonologBundle.
 
 The processor automatically masks detectable sensitive data in:
 

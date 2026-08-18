@@ -39,18 +39,18 @@
         "symfony/monolog-bundle": "^4.0"
     },
     "suggest": {
-        "monolog/monolog": "Required to use the Monolog processor and formatter integrations.",
+        "monolog/monolog": "Optional: ^3.6 is the tested version range for the Monolog processor and formatter integrations.",
         "symfony/monolog-bundle": "Required for automatic processor registration in Symfony applications."
     },
     "autoload": {
-      "psr-4": {
-        "Masked\\Bundle\\": "src/"
-      }
+        "psr-4": {
+            "Masked\\Bundle\\": "src/"
+        }
     },
     "autoload-dev": {
-      "psr-4": {
-        "Masked\\Bundle\\Tests\\": "tests/"
-      }
+        "psr-4": {
+            "Masked\\Bundle\\Tests\\": "tests/"
+        }
     },
     "scripts": {
         "format": "php-cs-fixer fix --config=.php-cs-fixer.dist.php",

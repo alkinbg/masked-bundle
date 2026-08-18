@@ -96,7 +96,10 @@ return static function (ContainerConfigurator $container): void {
         '.masked.sensitive_logger',
     );
 
-    if (!class_exists(\Monolog\LogRecord::class)) {
+    if (
+        !class_exists(\Monolog\Logger::class)
+        || 3 !== \Monolog\Logger::API
+    ) {
         return;
     }
 
