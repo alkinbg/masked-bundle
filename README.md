@@ -2,7 +2,8 @@
 
 Sensitive data detection and masking for Symfony applications.
 
-MaskedBundle provides reusable masking services for Symfony applications and optional Monolog integration for preventing sensitive payment-card data from being written to logs.
+MaskedBundle provides reusable masking services for Symfony applications and optional Monolog integration for sensitive 
+values should be easy to declare and safely removed from diagnostic output.
 
 The current detector focuses on payment card numbers found in free text.
 
@@ -250,6 +251,34 @@ The Monolog processor intentionally does not traverse arbitrary objects.
 `SensitiveLineFormatter` and `SensitiveJsonFormatter` specifically protect Monolog exception normalization. They do not provide a general guarantee that arbitrary custom objects or custom formatters cannot expose sensitive data.
 
 Applications using custom formatters should review their serialization behavior separately.
+
+## Acknowledgements
+
+MaskedBundle owes an important part of its origin to
+[Fuko\Masked](https://github.com/fuko-php/masked), created by
+[Kaloyan K. Tsvetkov](https://github.com/kktsvetkov).
+
+The original project introduced a simple and practical idea: sensitive values
+should be easy to declare and safely removed from diagnostic output before
+they accidentally reach logs, dumps or other places where they do not belong.
+
+That idea stayed with me.
+
+While contributing automatic payment-card detection to Fuko\Masked, I started
+thinking about how the same principle could be approached today in a modern
+Symfony application: with dependency injection, explicit service boundaries,
+automatic detection where it can be trusted, and integrations designed for
+long-running applications and contemporary logging pipelines.
+
+MaskedBundle grew from that thought.
+
+It is not a port of Fuko\Masked and does not attempt to preserve its API.
+Its architecture and implementation are new, but the original project's
+philosophy remains an important part of its foundation.
+
+My sincere thanks to КТ [Kaloyan K. Tsvetkov](https://github.com/kktsvetkov). for the original idea, for creating Fuko\Masked,
+and, more importantly, for the inspiration that eventually led to this
+project.
 
 ## Development
 
