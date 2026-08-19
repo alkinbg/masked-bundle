@@ -230,9 +230,14 @@ budget. `StructuredDataMasker` shares one budget across all supported scalar
 values and array keys in the complete traversal. `SensitiveLogger` shares one
 budget between the log message and structured context.
 
+`SensitiveDataProcessor` shares one candidate-validation budget across the
+message, context and extra data of a complete `LogRecord`.
+`SensitiveJsonFormatter` shares one budget across all supported scalar values
+and keys processed by a single `format()` or `formatBatch()` operation.
+
 If the budget is exhausted, the complete current input is treated as sensitive.
 The same fail-closed state applies to later supported scalar values and array
-keys processed by the same structured masking or sensitive logging operation.
+keys processed within the same shared-budget operation.
 
 The 13–19 digit range is a detector boundary, not a claim that it represents
 every payment-card identifier permitted by every payment-card standard.
@@ -330,6 +335,11 @@ processors and handlers receive them.
 Because objects may later be normalized or serialized by a formatter,
 MaskedBundle also provides formatter-aware integrations.
 
+Processor-only masking does not sanitize sensitive data introduced later when
+preserved exceptions, `Stringable`, `JsonSerializable` or other objects are
+rendered or serialized. Use `SensitiveLineFormatter` or
+`SensitiveJsonFormatter` on handlers that may render such objects.
+
 ## SensitiveLineFormatter
 
 Use `SensitiveLineFormatter` for line-oriented log output:
@@ -373,6 +383,10 @@ JSON masking is bounded independently from Monolog normalization. Containers
 are limited to 1,000 processed entries, nesting is limited to 32 masking
 levels, and one `format()` or `formatBatch()` operation is limited to 10,000
 processed entries in total.
+
+The payment-card candidate-validation budget is also shared across the complete
+`format()` or `formatBatch()` operation rather than restarted for each
+normalized key or scalar value.
 
 When a masking limit is reached, remaining unprocessed normalized data is
 omitted and a safe placeholder is inserted. Raw unprocessed values are never

@@ -200,9 +200,14 @@ budget. `StructuredDataMasker` shares one budget across all supported scalar
 values and array keys in the complete traversal. `SensitiveLogger` shares one
 budget between the log message and structured context.
 
+`SensitiveDataProcessor` shares one candidate-validation budget across the
+message, context and extra data of a complete `LogRecord`.
+`SensitiveJsonFormatter` shares one budget across all supported scalar values
+and keys processed by a single `format()` or `formatBatch()` operation.
+
 If the budget is exhausted, the complete current input is treated as sensitive.
 The same fail-closed state applies to later supported scalar values and array
-keys processed by the same structured masking or sensitive logging operation.
+keys processed within the same shared-budget operation.
 
 The detector can find multiple payment-card numbers in the same string and is
 safe with multibyte surrounding text.
@@ -275,8 +280,16 @@ The processor automatically masks detectable sensitive data in:
 - scalar and array values in `context`;
 - scalar and array values in `extra`.
 
+The message, context and extra data share the same payment-card
+candidate-validation budget for the complete `LogRecord`.
+
 Arbitrary objects are deliberately preserved so their identity and behavior are
 not changed before downstream Monolog processing.
+
+Processor-only masking does not sanitize sensitive data introduced later when
+preserved exceptions, `Stringable`, `JsonSerializable` or other objects are
+rendered or serialized. Use one of the sensitive formatters when the handler
+may render such objects.
 
 ### Line formatter
 
@@ -296,6 +309,10 @@ Formatter masking has its own bounded traversal. At most 1,000 entries are
 processed per container, nesting is limited to 32 masking levels, and a single
 `format()` or `formatBatch()` operation processes at most 10,000 entries in
 total.
+
+Payment-card candidate validation also uses one shared budget for the complete
+`format()` or `formatBatch()` operation rather than restarting for each
+normalized key or scalar value.
 
 If a masking limit is reached, unprocessed normalized data is omitted and a
 safe placeholder is emitted instead.
