@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masked\Bundle\Monolog;
 
+use Masked\Bundle\Detection\SensitiveDataDetectionContext;
 use Masked\Bundle\StructuredDataMasker;
 use Monolog\Formatter\JsonFormatter;
 use Monolog\LogRecord;
@@ -26,6 +27,8 @@ final class SensitiveJsonFormatter extends JsonFormatter
         '[maximum JSON masking work budget exceeded]';
 
     private ?int $remainingMaskingItems = null;
+
+    private ?SensitiveDataDetectionContext $detectionContext = null;
 
     public function __construct(
         private readonly StructuredDataMasker $structuredDataMasker,
@@ -113,8 +116,8 @@ final class SensitiveJsonFormatter extends JsonFormatter
     }
 
     /**
-     * Masks one normalized JSON tree using the work budget shared by the
-     * surrounding format or formatBatch operation.
+     * Masks one normalized JSON tree using traversal and detector work budgets
+     * shared by the surrounding format or formatBatch operation.
      *
      * Monolog may leave objects inside values returned by
      * JsonSerializable::jsonSerialize(). Those objects are converted to
@@ -297,7 +300,10 @@ final class SensitiveJsonFormatter extends JsonFormatter
         #[\SensitiveParameter]
         int|string $key,
     ): int|string {
-        $maskedKey = $this->structuredDataMasker->mask($key);
+        $maskedKey = $this->structuredDataMasker->maskWithinContext(
+            $key,
+            $this->detectionContext(),
+        );
 
         if (!is_int($maskedKey) && !is_string($maskedKey)) {
             throw new \LogicException('Masked JSON keys must remain integers or strings.');
@@ -315,7 +321,10 @@ final class SensitiveJsonFormatter extends JsonFormatter
         #[\SensitiveParameter]
         mixed $data,
     ): mixed {
-        $masked = $this->structuredDataMasker->mask($data);
+        $masked = $this->structuredDataMasker->maskWithinContext(
+            $data,
+            $this->detectionContext(),
+        );
 
         if (
             null !== $masked
@@ -394,6 +403,7 @@ final class SensitiveJsonFormatter extends JsonFormatter
         }
 
         $this->remainingMaskingItems = self::MAX_TOTAL_JSON_ITEMS;
+        $this->detectionContext = SensitiveDataDetectionContext::create([]);
 
         return true;
     }
@@ -401,6 +411,16 @@ final class SensitiveJsonFormatter extends JsonFormatter
     private function finishMaskingOperation(): void
     {
         $this->remainingMaskingItems = null;
+        $this->detectionContext = null;
+    }
+
+    private function detectionContext(): SensitiveDataDetectionContext
+    {
+        if (null === $this->detectionContext) {
+            throw new \LogicException('JSON detector work must run inside a masking operation.');
+        }
+
+        return $this->detectionContext;
     }
 
     private function consumeMaskingItem(): bool
