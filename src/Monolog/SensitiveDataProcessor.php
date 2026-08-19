@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masked\Bundle\Monolog;
 
+use Masked\Bundle\Detection\SensitiveDataDetectionContext;
 use Masked\Bundle\SensitiveDataMasker;
 use Masked\Bundle\StructuredDataMasker;
 use Monolog\LogRecord;
@@ -20,15 +21,21 @@ final readonly class SensitiveDataProcessor
         #[\SensitiveParameter]
         LogRecord $record,
     ): LogRecord {
+        $detectionContext =
+            SensitiveDataDetectionContext::create([]);
+
         return $record->with(
-            message: $this->sensitiveDataMasker->mask(
+            message: $this->sensitiveDataMasker->maskWithinContext(
                 $record->message,
+                $detectionContext,
             ),
-            context: $this->structuredDataMasker->mask(
+            context: $this->structuredDataMasker->maskWithinContext(
                 $record->context,
+                $detectionContext,
             ),
-            extra: $this->structuredDataMasker->mask(
+            extra: $this->structuredDataMasker->maskWithinContext(
                 $record->extra,
+                $detectionContext,
             ),
         );
     }
