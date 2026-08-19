@@ -41,9 +41,13 @@ final readonly class SensitiveDataMasker
      * Masks one string using detector work budgets shared by the surrounding
      * operation.
      *
-     * Exact-value detection runs first. If its shared resource budget is
-     * exhausted, the complete current input is redacted immediately and no
-     * additional automatic detector work is performed.
+     * If payment-card detection has already exhausted its shared work budget,
+     * the complete current input is redacted immediately without performing
+     * unnecessary exact-value searches.
+     *
+     * Exact-value detection otherwise runs first. If its shared resource
+     * budget is exhausted, the complete current input is redacted immediately
+     * and no additional automatic detector work is performed.
      *
      * @internal
      */
@@ -53,6 +57,20 @@ final readonly class SensitiveDataMasker
         #[\SensitiveParameter]
         SensitiveDataDetectionContext $detectionContext,
     ): string {
+        $paymentCardDetectionContext =
+            $detectionContext
+                ->paymentCardDetectionContext();
+
+        if ($paymentCardDetectionContext->isFailClosed()) {
+            return $this->rangeRedactor->redact(
+                $value,
+                $this->paymentCardDetector->detectWithinContext(
+                    $value,
+                    $paymentCardDetectionContext,
+                ),
+            );
+        }
+
         $exactValueDetectionContext =
             $detectionContext
                 ->exactValueDetectionContext();
@@ -74,8 +92,7 @@ final readonly class SensitiveDataMasker
             ...$exactValueMatches,
             ...$this->paymentCardDetector->detectWithinContext(
                 $value,
-                $detectionContext
-                    ->paymentCardDetectionContext(),
+                $paymentCardDetectionContext,
             ),
         ];
 
