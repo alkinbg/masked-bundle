@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Masked\Bundle;
 
-use Masked\Bundle\Detection\ExactValueDetectionContext;
+use Masked\Bundle\Detection\SensitiveDataDetectionContext;
 
 final readonly class StructuredDataMasker
 {
@@ -43,15 +43,15 @@ final readonly class StructuredDataMasker
     ): mixed {
         return $this->maskWithinContext(
             $value,
-            ExactValueDetectionContext::create(
+            SensitiveDataDetectionContext::create(
                 $sensitiveValues,
             ),
         );
     }
 
     /**
-     * Masks structured data while sharing one exact-value detection budget
-     * across every supported scalar value and array key in the traversal.
+     * Masks structured data while sharing detector work budgets across every
+     * supported scalar value and array key in the traversal.
      *
      * The structured-data traversal budget remains scoped to this invocation.
      *
@@ -61,14 +61,14 @@ final readonly class StructuredDataMasker
         #[\SensitiveParameter]
         mixed $value,
         #[\SensitiveParameter]
-        ExactValueDetectionContext $exactValueDetectionContext,
+        SensitiveDataDetectionContext $detectionContext,
     ): mixed {
         $remainingArrayItems =
             self::MAX_TOTAL_ARRAY_ITEMS;
 
         return $this->maskValue(
             $value,
-            $exactValueDetectionContext,
+            $detectionContext,
             [],
             0,
             $remainingArrayItems,
@@ -82,7 +82,7 @@ final readonly class StructuredDataMasker
         #[\SensitiveParameter]
         mixed $value,
         #[\SensitiveParameter]
-        ExactValueDetectionContext $exactValueDetectionContext,
+        SensitiveDataDetectionContext $detectionContext,
         array $activeArrayReferenceIds,
         int $arrayDepth,
         int &$remainingArrayItems,
@@ -91,7 +91,7 @@ final readonly class StructuredDataMasker
             return $this->sensitiveDataMasker
                 ->maskWithinContext(
                     $value,
-                    $exactValueDetectionContext,
+                    $detectionContext,
                 );
         }
 
@@ -101,7 +101,7 @@ final readonly class StructuredDataMasker
             $masked = $this->sensitiveDataMasker
                 ->maskWithinContext(
                     $valueAsString,
-                    $exactValueDetectionContext,
+                    $detectionContext,
                 );
 
             if ($masked !== $valueAsString) {
@@ -124,7 +124,7 @@ final readonly class StructuredDataMasker
 
         return $this->maskArray(
             $value,
-            $exactValueDetectionContext,
+            $detectionContext,
             $activeArrayReferenceIds,
             $arrayDepth,
             $remainingArrayItems,
@@ -141,7 +141,7 @@ final readonly class StructuredDataMasker
         #[\SensitiveParameter]
         array $value,
         #[\SensitiveParameter]
-        ExactValueDetectionContext $exactValueDetectionContext,
+        SensitiveDataDetectionContext $detectionContext,
         array $activeArrayReferenceIds,
         int $arrayDepth,
         int &$remainingArrayItems,
@@ -176,7 +176,7 @@ final readonly class StructuredDataMasker
 
             $maskedKey = $this->maskArrayKey(
                 $key,
-                $exactValueDetectionContext,
+                $detectionContext,
             );
 
             $maskedKey = $this->ensureUniqueArrayKey(
@@ -218,7 +218,7 @@ final readonly class StructuredDataMasker
                     $masked[$maskedKey] =
                         $this->maskValue(
                             $item,
-                            $exactValueDetectionContext,
+                            $detectionContext,
                             $nestedActiveArrayReferenceIds,
                             $arrayDepth + 1,
                             $remainingArrayItems,
@@ -231,7 +231,7 @@ final readonly class StructuredDataMasker
             $masked[$maskedKey] =
                 $this->maskValue(
                     $item,
-                    $exactValueDetectionContext,
+                    $detectionContext,
                     $activeArrayReferenceIds,
                     $arrayDepth + 1,
                     $remainingArrayItems,
@@ -273,14 +273,14 @@ final readonly class StructuredDataMasker
         #[\SensitiveParameter]
         int|string $key,
         #[\SensitiveParameter]
-        ExactValueDetectionContext $exactValueDetectionContext,
+        SensitiveDataDetectionContext $detectionContext,
     ): int|string {
         $keyAsString = (string) $key;
 
         $maskedKey = $this->sensitiveDataMasker
             ->maskWithinContext(
                 $keyAsString,
-                $exactValueDetectionContext,
+                $detectionContext,
             );
 
         if ($maskedKey === $keyAsString) {

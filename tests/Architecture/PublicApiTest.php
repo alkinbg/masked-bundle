@@ -6,7 +6,9 @@ namespace Masked\Bundle\Tests\Architecture;
 
 use Masked\Bundle\Detection\ExactValueDetectionContext;
 use Masked\Bundle\Detection\ExactValueDetector;
+use Masked\Bundle\Detection\PaymentCardDetectionContext;
 use Masked\Bundle\Detection\PaymentCardDetector;
+use Masked\Bundle\Detection\SensitiveDataDetectionContext;
 use Masked\Bundle\Detection\SensitiveDataMatch;
 use Masked\Bundle\Detection\SensitiveDataMatchNormalizer;
 use Masked\Bundle\Logging\SensitiveLogger;
@@ -108,6 +110,14 @@ final class PublicApiTest extends TestCase
             ExactValueDetectionContext::class,
         ];
 
+        yield 'payment-card context' => [
+            PaymentCardDetectionContext::class,
+        ];
+
+        yield 'sensitive-data detection context' => [
+            SensitiveDataDetectionContext::class,
+        ];
+
         yield 'exact-value detector' => [
             ExactValueDetector::class,
         ];
@@ -172,6 +182,11 @@ final class PublicApiTest extends TestCase
         yield 'string masker shared context' => [
             SensitiveDataMasker::class,
             'maskWithinContext',
+        ];
+
+        yield 'payment-card detector shared context' => [
+            PaymentCardDetector::class,
+            'detectWithinContext',
         ];
 
         yield 'structured masker shared context' => [

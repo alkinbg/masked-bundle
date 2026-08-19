@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Masked\Bundle;
 
-use Masked\Bundle\Detection\ExactValueDetectionContext;
 use Masked\Bundle\Detection\ExactValueDetector;
 use Masked\Bundle\Detection\PaymentCardDetector;
+use Masked\Bundle\Detection\SensitiveDataDetectionContext;
 
 final readonly class SensitiveDataMasker
 {
@@ -31,15 +31,15 @@ final readonly class SensitiveDataMasker
     ): string {
         return $this->maskWithinContext(
             $value,
-            ExactValueDetectionContext::create(
+            SensitiveDataDetectionContext::create(
                 $sensitiveValues,
             ),
         );
     }
 
     /**
-     * Masks one string using an exact-value work budget shared by the
-     * surrounding operation.
+     * Masks one string using detector work budgets shared by the surrounding
+     * operation.
      *
      * Exact-value detection runs first. If its shared resource budget is
      * exhausted, the complete current input is redacted immediately and no
@@ -51,18 +51,19 @@ final readonly class SensitiveDataMasker
         #[\SensitiveParameter]
         string $value,
         #[\SensitiveParameter]
-        ExactValueDetectionContext $exactValueDetectionContext,
+        SensitiveDataDetectionContext $detectionContext,
     ): string {
+        $exactValueDetectionContext =
+            $detectionContext
+                ->exactValueDetectionContext();
+
         $exactValueMatches =
             $this->exactValueDetector->detectWithinContext(
                 $value,
                 $exactValueDetectionContext,
             );
 
-        if (
-            $exactValueDetectionContext
-                ->isFailClosed()
-        ) {
+        if ($exactValueDetectionContext->isFailClosed()) {
             return $this->rangeRedactor->redact(
                 $value,
                 $exactValueMatches,
@@ -71,8 +72,10 @@ final readonly class SensitiveDataMasker
 
         $matches = [
             ...$exactValueMatches,
-            ...$this->paymentCardDetector->detect(
+            ...$this->paymentCardDetector->detectWithinContext(
                 $value,
+                $detectionContext
+                    ->paymentCardDetectionContext(),
             ),
         ];
 

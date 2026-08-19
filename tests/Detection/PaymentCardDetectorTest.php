@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masked\Bundle\Tests\Detection;
 
+use Masked\Bundle\Detection\PaymentCardDetectionContext;
 use Masked\Bundle\Detection\PaymentCardDetector;
 use Masked\Bundle\Detection\SensitiveDataMatch;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -333,6 +334,80 @@ final class PaymentCardDetectorTest extends TestCase
         );
     }
 
+    public function testSharesCandidateCheckBudgetAcrossInputs(): void
+    {
+        $detector = new PaymentCardDetector();
+        $context = PaymentCardDetectionContext::create();
+
+        /*
+         * For 200 one-digit groups, the scanner performs 1,295 candidate
+         * validations while every repeated-digit candidate remains invalid.
+         *
+         * Seven inputs consume 9,065 validations. The eighth input therefore
+         * exceeds the shared 10,000-check budget while each individual input
+         * remains safely below the standalone limit.
+         */
+        $value = self::createCandidateHeavyValue(
+            200,
+        );
+
+        for ($index = 0; $index < 7; ++$index) {
+            self::assertSame(
+                [],
+                $detector->detectWithinContext(
+                    $value,
+                    $context,
+                ),
+            );
+        }
+
+        $matches = $detector->detectWithinContext(
+            $value,
+            $context,
+        );
+
+        self::assertCount(
+            1,
+            $matches,
+        );
+
+        self::assertSame(
+            0,
+            $matches[0]->byteOffset,
+        );
+
+        self::assertSame(
+            strlen($value),
+            $matches[0]->byteLength,
+        );
+
+        self::assertTrue(
+            $context->isFailClosed(),
+        );
+
+        $laterValue = 'later safe value';
+
+        $laterMatches = $detector->detectWithinContext(
+            $laterValue,
+            $context,
+        );
+
+        self::assertCount(
+            1,
+            $laterMatches,
+        );
+
+        self::assertSame(
+            0,
+            $laterMatches[0]->byteOffset,
+        );
+
+        self::assertSame(
+            strlen($laterValue),
+            $laterMatches[0]->byteLength,
+        );
+    }
+
     /**
      * @param list<SensitiveDataMatch> $matches
      *
@@ -353,5 +428,18 @@ final class PaymentCardDetectorTest extends TestCase
         }
 
         return $result;
+    }
+
+    private static function createCandidateHeavyValue(
+        int $digitGroupCount,
+    ): string {
+        return implode(
+            ' ',
+            array_fill(
+                0,
+                $digitGroupCount,
+                '1',
+            ),
+        );
     }
 }

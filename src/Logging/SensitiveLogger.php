@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Masked\Bundle\Logging;
 
-use Masked\Bundle\Detection\ExactValueDetectionContext;
+use Masked\Bundle\Detection\SensitiveDataDetectionContext;
 use Masked\Bundle\SensitiveDataMasker;
 use Masked\Bundle\StructuredDataMasker;
 use Psr\Log\LoggerInterface;
@@ -21,9 +21,9 @@ final readonly class SensitiveLogger
      * Masks a log message and structured context before delegating them
      * to the supplied PSR-3 logger.
      *
-     * The message and context share one exact-value detection context so
-     * explicitly supplied secrets cannot multiply substring-search work by
-     * restarting the detection budget for each field.
+     * The message and context share one sensitive-data detection context so
+     * detector work cannot be multiplied by restarting resource budgets for
+     * each field.
      *
      * Arbitrary objects inside the context are intentionally preserved by
      * StructuredDataMasker and remain the responsibility of downstream
@@ -42,8 +42,8 @@ final readonly class SensitiveLogger
         #[\SensitiveParameter]
         array $sensitiveValues = [],
     ): void {
-        $exactValueDetectionContext =
-            ExactValueDetectionContext::create(
+        $detectionContext =
+            SensitiveDataDetectionContext::create(
                 $sensitiveValues,
             );
 
@@ -51,14 +51,14 @@ final readonly class SensitiveLogger
             $this->sensitiveDataMasker
                 ->maskWithinContext(
                     (string) $message,
-                    $exactValueDetectionContext,
+                    $detectionContext,
                 );
 
         $maskedContext =
             $this->structuredDataMasker
                 ->maskWithinContext(
                     $context,
-                    $exactValueDetectionContext,
+                    $detectionContext,
                 );
 
         if (!is_array($maskedContext)) {

@@ -7,6 +7,7 @@ namespace Masked\Bundle\Tests\Security;
 use Masked\Bundle\Detection\ExactValueDetectionContext;
 use Masked\Bundle\Detection\ExactValueDetector;
 use Masked\Bundle\Detection\PaymentCardDetector;
+use Masked\Bundle\Detection\SensitiveDataDetectionContext;
 use Masked\Bundle\Logging\SensitiveLogger;
 use Masked\Bundle\Monolog\SensitiveDataProcessor;
 use Masked\Bundle\Monolog\SensitiveJsonFormatter;
@@ -58,6 +59,12 @@ final class SensitiveParameterTest extends TestCase
             'sensitiveValues',
         ];
 
+        yield 'sensitive-data context explicit values' => [
+            SensitiveDataDetectionContext::class,
+            'create',
+            'sensitiveValues',
+        ];
+
         yield 'exact detector value' => [
             ExactValueDetector::class,
             'detect',
@@ -85,6 +92,12 @@ final class SensitiveParameterTest extends TestCase
         yield 'payment card detector input' => [
             PaymentCardDetector::class,
             'detect',
+            'value',
+        ];
+
+        yield 'payment card shared-context input' => [
+            PaymentCardDetector::class,
+            'detectWithinContext',
             'value',
         ];
 
@@ -148,10 +161,10 @@ final class SensitiveParameterTest extends TestCase
             'value',
         ];
 
-        yield 'masker exact context' => [
+        yield 'masker detection context' => [
             SensitiveDataMasker::class,
             'maskWithinContext',
-            'exactValueDetectionContext',
+            'detectionContext',
         ];
 
         yield 'structured masker root value' => [
@@ -172,10 +185,10 @@ final class SensitiveParameterTest extends TestCase
             'value',
         ];
 
-        yield 'structured shared exact context' => [
+        yield 'structured shared detection context' => [
             StructuredDataMasker::class,
             'maskWithinContext',
-            'exactValueDetectionContext',
+            'detectionContext',
         ];
 
         yield 'structured masker recursive value' => [
@@ -184,10 +197,10 @@ final class SensitiveParameterTest extends TestCase
             'value',
         ];
 
-        yield 'structured recursive exact context' => [
+        yield 'structured recursive detection context' => [
             StructuredDataMasker::class,
             'maskValue',
-            'exactValueDetectionContext',
+            'detectionContext',
         ];
 
         yield 'structured array value' => [
@@ -196,10 +209,10 @@ final class SensitiveParameterTest extends TestCase
             'value',
         ];
 
-        yield 'structured array exact context' => [
+        yield 'structured array detection context' => [
             StructuredDataMasker::class,
             'maskArray',
-            'exactValueDetectionContext',
+            'detectionContext',
         ];
 
         yield 'structured array key' => [
@@ -208,10 +221,10 @@ final class SensitiveParameterTest extends TestCase
             'key',
         ];
 
-        yield 'structured array-key exact context' => [
+        yield 'structured array-key detection context' => [
             StructuredDataMasker::class,
             'maskArrayKey',
-            'exactValueDetectionContext',
+            'detectionContext',
         ];
 
         yield 'sensitive logger message' => [

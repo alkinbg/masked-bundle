@@ -20,14 +20,6 @@ final readonly class PaymentCardDetector
 
     private const int MAX_DETECTABLE_PAN_LENGTH = 19;
 
-    /**
-     * Bounds candidate validation work for one input.
-     *
-     * When the limit is exhausted the detector fails closed by marking the
-     * complete input as sensitive.
-     */
-    private const int MAX_CANDIDATE_CHECKS = 10000;
-
     public function __construct(
         private SensitiveDataMatchNormalizer $matchNormalizer =
         new SensitiveDataMatchNormalizer(),
@@ -35,11 +27,7 @@ final readonly class PaymentCardDetector
     }
 
     /**
-     * Scans payment-card candidates incrementally.
-     *
-     * The scanner never materializes every numeric sequence or every digit
-     * group in the input. At most the digit groups required to represent a
-     * 19-digit candidate are retained at any one time.
+     * Detects payment-card candidates using a fresh work budget.
      *
      * @return list<SensitiveDataMatch>
      */
@@ -47,13 +35,44 @@ final readonly class PaymentCardDetector
         #[\SensitiveParameter]
         string $value,
     ): array {
+        return $this->detectWithinContext(
+            $value,
+            PaymentCardDetectionContext::create(),
+        );
+    }
+
+    /**
+     * Detects payment-card candidates using the work budget shared by the
+     * surrounding masking operation.
+     *
+     * Exhausting the shared candidate-validation budget fails closed by marking
+     * the complete current input as sensitive. The context remains fail-closed
+     * for every later value processed by the same operation.
+     *
+     * @return list<SensitiveDataMatch>
+     *
+     * @phpstan-impure
+     *
+     * @internal
+     */
+    public function detectWithinContext(
+        #[\SensitiveParameter]
+        string $value,
+        PaymentCardDetectionContext $context,
+    ): array {
         if ('' === $value) {
             return [];
         }
 
         $valueByteLength = strlen($value);
+
+        if ($context->isFailClosed()) {
+            return $this->failClosedMatch(
+                $valueByteLength,
+            );
+        }
+
         $byteOffset = 0;
-        $candidateChecks = 0;
         $matches = [];
 
         while ($byteOffset < $valueByteLength) {
@@ -66,7 +85,7 @@ final readonly class PaymentCardDetector
             $sequenceResult = $this->detectInSequence(
                 $value,
                 $byteOffset,
-                $candidateChecks,
+                $context,
             );
 
             if (null === $sequenceResult) {
@@ -82,7 +101,9 @@ final readonly class PaymentCardDetector
             $byteOffset = $sequenceResult['nextByteOffset'];
         }
 
-        return $this->matchNormalizer->normalize($matches);
+        return $this->matchNormalizer->normalize(
+            $matches,
+        );
     }
 
     /**
@@ -98,7 +119,7 @@ final readonly class PaymentCardDetector
         #[\SensitiveParameter]
         string $value,
         int $sequenceByteOffset,
-        int &$candidateChecks,
+        PaymentCardDetectionContext $context,
     ): ?array {
         $valueByteLength = strlen($value);
         $byteOffset = $sequenceByteOffset;
@@ -205,14 +226,9 @@ final readonly class PaymentCardDetector
                         continue;
                     }
 
-                    if (
-                        $candidateChecks
-                        >= self::MAX_CANDIDATE_CHECKS
-                    ) {
+                    if (!$context->consumeCandidateCheck()) {
                         return null;
                     }
-
-                    ++$candidateChecks;
 
                     if (!$this->isValidPan($pan)) {
                         continue;
