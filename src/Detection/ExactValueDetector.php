@@ -9,16 +9,6 @@ namespace Masked\Bundle\Detection;
  */
 final readonly class ExactValueDetector
 {
-    private const int MAX_SEARCH_OPERATIONS = 10000;
-
-    private const int MAX_SENSITIVE_VALUE_COUNT = 1000;
-
-    private const int MAX_TOTAL_SENSITIVE_VALUE_BYTES =
-        1024 * 1024;
-
-    private const int MAX_SEARCH_WINDOW_BYTES =
-        64 * 1024 * 1024;
-
     public function __construct(
         private SensitiveDataMatchNormalizer $matchNormalizer =
         new SensitiveDataMatchNormalizer(),
@@ -27,19 +17,11 @@ final readonly class ExactValueDetector
 
     /**
      * Detects exact byte-for-byte occurrences of explicitly supplied
-     * sensitive values.
+     * sensitive values using a fresh work budget.
      *
      * Matching is intentionally case-sensitive and byte-oriented. Sensitive
      * values are supplied explicitly, so no normalization or interpretation
      * should change their meaning.
-     *
-     * Overlapping occurrences of the same sensitive value are merged while
-     * scanning so pathological inputs cannot create one match object per
-     * overlapping occurrence.
-     *
-     * Explicit-value count, unique-value bytes, substring search count and
-     * aggregate search-window bytes are bounded. Exhausting any safety limit
-     * fails closed by marking the complete input as sensitive.
      *
      * @param list<string> $sensitiveValues
      *
@@ -51,85 +33,59 @@ final readonly class ExactValueDetector
         #[\SensitiveParameter]
         array $sensitiveValues,
     ): array {
-        if ([] === $sensitiveValues) {
+        return $this->detectWithinContext(
+            $value,
+            ExactValueDetectionContext::create(
+                $sensitiveValues,
+            ),
+        );
+    }
+
+    /**
+     * Detects explicit values using the work budget shared by the surrounding
+     * masking operation.
+     *
+     * Overlapping occurrences of the same sensitive value are merged while
+     * scanning so pathological inputs cannot create one match object per
+     * overlapping occurrence.
+     *
+     * Exhausting any shared substring-search budget fails closed by marking
+     * the complete current input as sensitive. The context remains fail-closed
+     * for every later value processed by the same operation.
+     *
+     * @return list<SensitiveDataMatch>
+     *
+     * @internal
+     */
+    public function detectWithinContext(
+        #[\SensitiveParameter]
+        string $value,
+        #[\SensitiveParameter]
+        ExactValueDetectionContext $context,
+    ): array {
+        if ('' === $value) {
             return [];
         }
 
         $valueByteLength = strlen($value);
 
-        if (
-            count($sensitiveValues)
-            > self::MAX_SENSITIVE_VALUE_COUNT
-        ) {
+        if ($context->isFailClosed()) {
             return $this->failClosedMatch(
                 $valueByteLength,
             );
         }
 
-        /*
-         * For inputs within the supplied-value count limit, an empty explicit
-         * sensitive value remains a programmer error.
-         */
-        foreach ($sensitiveValues as $sensitiveValue) {
-            if ('' === $sensitiveValue) {
-                throw new \InvalidArgumentException('Sensitive values must not contain an empty string.');
-            }
-        }
-
-        if ('' === $value) {
-            return [];
-        }
-
-        $uniqueSensitiveValues = [];
-        $seenSensitiveValues = [];
-        $totalSensitiveValueBytes = 0;
-
-        foreach ($sensitiveValues as $sensitiveValue) {
-            $sensitiveValueByteLength =
-                strlen($sensitiveValue);
-
-            if (
-                $sensitiveValueByteLength
-                > self::MAX_TOTAL_SENSITIVE_VALUE_BYTES
-            ) {
-                return $this->failClosedMatch(
-                    $valueByteLength,
-                );
-            }
-
-            /*
-             * Prefix the key so PHP never interprets a numeric-looking
-             * sensitive value as an integer array key.
-             */
-            $seenKey = "\0".$sensitiveValue;
-
-            if (isset($seenSensitiveValues[$seenKey])) {
-                continue;
-            }
-
-            if (
-                $totalSensitiveValueBytes
-                > self::MAX_TOTAL_SENSITIVE_VALUE_BYTES
-                - $sensitiveValueByteLength
-            ) {
-                return $this->failClosedMatch(
-                    $valueByteLength,
-                );
-            }
-
-            $seenSensitiveValues[$seenKey] = true;
-            $uniqueSensitiveValues[] = $sensitiveValue;
-
-            $totalSensitiveValueBytes +=
-                $sensitiveValueByteLength;
-        }
-
         $matches = [];
-        $searchOperations = 0;
-        $remainingSearchWindowBytes =
-            self::MAX_SEARCH_WINDOW_BYTES;
 
-        foreach ($uniqueSensitiveValues as $sensitiveValue) {
+        /*
+         * ExactValueDetectionContext guarantees nondecreasing sensitive-value
+         * byte lengths. Once one value is longer than the current input, every
+         * remaining value is too, so no additional pattern iteration is
+         * necessary.
+         */
+        foreach (
+            $context->sensitiveValues() as $sensitiveValue
+        ) {
             $sensitiveValueByteLength =
                 strlen($sensitiveValue);
 
@@ -137,46 +93,44 @@ final readonly class ExactValueDetector
                 $sensitiveValueByteLength
                 > $valueByteLength
             ) {
-                continue;
+                break;
             }
 
             $searchByteOffset = 0;
 
+            /*
+             * There cannot be a match starting beyond this byte offset.
+             */
+            $lastSearchByteOffset =
+                $valueByteLength
+                - $sensitiveValueByteLength;
+
             $pendingMatchByteOffset = null;
             $pendingMatchEndByteOffsetExclusive = null;
 
-            while (true) {
-                if (
-                    $searchOperations
-                    >= self::MAX_SEARCH_OPERATIONS
-                ) {
-                    return $this->failClosedMatch(
-                        $valueByteLength,
-                    );
-                }
-
+            while (
+                $searchByteOffset
+                <= $lastSearchByteOffset
+            ) {
                 /*
-                 * strpos() may inspect the complete remaining input window.
-                 * Charge that worst-case window before performing the search
-                 * so many non-matching explicit values cannot multiply work
-                 * without bound.
+                 * Charge the complete possible search work before invoking
+                 * strpos(). The context accounts for both remaining haystack
+                 * size and needle length.
                  */
                 $searchWindowBytes =
-                    $valueByteLength - $searchByteOffset;
+                    $valueByteLength
+                    - $searchByteOffset;
 
                 if (
-                    $searchWindowBytes
-                    > $remainingSearchWindowBytes
+                    !$context->consumeSearch(
+                        $searchWindowBytes,
+                        $sensitiveValueByteLength,
+                    )
                 ) {
                     return $this->failClosedMatch(
                         $valueByteLength,
                     );
                 }
-
-                $remainingSearchWindowBytes -=
-                    $searchWindowBytes;
-
-                ++$searchOperations;
 
                 $matchByteOffset = strpos(
                     $value,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masked\Bundle\Tests\Architecture;
 
+use Masked\Bundle\Detection\ExactValueDetectionContext;
 use Masked\Bundle\Detection\ExactValueDetector;
 use Masked\Bundle\Detection\PaymentCardDetector;
 use Masked\Bundle\Detection\SensitiveDataMatch;
@@ -65,6 +66,32 @@ final class PublicApiTest extends TestCase
     }
 
     /**
+     * @param class-string $class
+     *
+     * @throws \ReflectionException
+     */
+    #[DataProvider('internalMethodProvider')]
+    public function testInternalOperationMethodIsMarkedInternal(
+        string $class,
+        string $method,
+    ): void {
+        $reflection = new \ReflectionMethod(
+            $class,
+            $method,
+        );
+
+        self::assertStringContainsString(
+            '@internal',
+            $reflection->getDocComment() ?: '',
+            sprintf(
+                '%s::%s() must remain an internal implementation hook.',
+                $class,
+                $method,
+            ),
+        );
+    }
+
+    /**
      * @return iterable<string, array{class-string}>
      */
     public static function internalClassProvider(): iterable
@@ -75,6 +102,10 @@ final class PublicApiTest extends TestCase
 
         yield 'range redactor' => [
             RangeRedactor::class,
+        ];
+
+        yield 'exact-value context' => [
+            ExactValueDetectionContext::class,
         ];
 
         yield 'exact-value detector' => [
@@ -125,6 +156,27 @@ final class PublicApiTest extends TestCase
 
         yield 'JSON formatter' => [
             SensitiveJsonFormatter::class,
+        ];
+    }
+
+    /**
+     * @return iterable<string, array{class-string, string}>
+     */
+    public static function internalMethodProvider(): iterable
+    {
+        yield 'exact detector shared context' => [
+            ExactValueDetector::class,
+            'detectWithinContext',
+        ];
+
+        yield 'string masker shared context' => [
+            SensitiveDataMasker::class,
+            'maskWithinContext',
+        ];
+
+        yield 'structured masker shared context' => [
+            StructuredDataMasker::class,
+            'maskWithinContext',
         ];
     }
 }

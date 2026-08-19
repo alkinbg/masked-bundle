@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masked\Bundle\Logging;
 
+use Masked\Bundle\Detection\ExactValueDetectionContext;
 use Masked\Bundle\SensitiveDataMasker;
 use Masked\Bundle\StructuredDataMasker;
 use Psr\Log\LoggerInterface;
@@ -19,6 +20,10 @@ final readonly class SensitiveLogger
     /**
      * Masks a log message and structured context before delegating them
      * to the supplied PSR-3 logger.
+     *
+     * The message and context share one exact-value detection context so
+     * explicitly supplied secrets cannot multiply substring-search work by
+     * restarting the detection budget for each field.
      *
      * Arbitrary objects inside the context are intentionally preserved by
      * StructuredDataMasker and remain the responsibility of downstream
@@ -37,15 +42,24 @@ final readonly class SensitiveLogger
         #[\SensitiveParameter]
         array $sensitiveValues = [],
     ): void {
-        $maskedMessage = $this->sensitiveDataMasker->mask(
-            (string) $message,
-            $sensitiveValues,
-        );
+        $exactValueDetectionContext =
+            ExactValueDetectionContext::create(
+                $sensitiveValues,
+            );
 
-        $maskedContext = $this->structuredDataMasker->mask(
-            $context,
-            $sensitiveValues,
-        );
+        $maskedMessage =
+            $this->sensitiveDataMasker
+                ->maskWithinContext(
+                    (string) $message,
+                    $exactValueDetectionContext,
+                );
+
+        $maskedContext =
+            $this->structuredDataMasker
+                ->maskWithinContext(
+                    $context,
+                    $exactValueDetectionContext,
+                );
 
         if (!is_array($maskedContext)) {
             throw new \LogicException('Structured data masking must preserve an array root.');

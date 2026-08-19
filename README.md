@@ -142,13 +142,27 @@ static or mutable secret registry.
 
 Automatic detection and explicit sensitive values can be used together in the
 same call.
-Exact-value detection uses a bounded search budget for pathological inputs. If
-the budget is exhausted before scanning completes, the complete input is
+
+Exact-value detection uses bounded search budgets for pathological inputs. If continuing the scan would 
+exceed a search budget while scanning a string, that current string is
 treated as sensitive rather than returning a partially scanned value.
+
 Explicit-value detection accepts at most 1,000 supplied values and at most
-1 MiB of unique sensitive-value data per operation. Aggregate substring-search
-windows are limited to 64 MiB. If any of these limits is exceeded, the complete
-input is treated as sensitive.
+1 MiB of supplied sensitive-value data per operation, including duplicates.
+
+Substring searching is limited to 10,000 operations, 64 MiB of aggregate
+search windows, and a conservative search-work budget of 1,073,741,824 units, calculated from
+both input-window and sensitive-value length.
+
+For structured masking, these exact-value search budgets are shared across all
+supported scalar values and array keys in the complete traversal.
+SensitiveLogger also shares one exact-value detection context between the log
+message and context.
+
+If any explicit-value resource limit is exceeded, exact-value detection enters
+fail-closed state for the remainder of that masking operation. Supported string
+and integer values processed after that point are treated as sensitive rather
+than receiving a fresh search budget.
 
 ## Masking structured data
 

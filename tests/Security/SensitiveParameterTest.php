@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masked\Bundle\Tests\Security;
 
+use Masked\Bundle\Detection\ExactValueDetectionContext;
 use Masked\Bundle\Detection\ExactValueDetector;
 use Masked\Bundle\Detection\PaymentCardDetector;
 use Masked\Bundle\Logging\SensitiveLogger;
@@ -34,7 +35,9 @@ final class SensitiveParameterTest extends TestCase
 
         self::assertCount(
             1,
-            $parameter->getAttributes(\SensitiveParameter::class),
+            $parameter->getAttributes(
+                \SensitiveParameter::class,
+            ),
             sprintf(
                 '%s::%s($%s) must be marked with #[\\SensitiveParameter].',
                 $class,
@@ -49,6 +52,12 @@ final class SensitiveParameterTest extends TestCase
      */
     public static function sensitiveParameterProvider(): iterable
     {
+        yield 'exact context explicit values' => [
+            ExactValueDetectionContext::class,
+            'create',
+            'sensitiveValues',
+        ];
+
         yield 'exact detector value' => [
             ExactValueDetector::class,
             'detect',
@@ -59,6 +68,18 @@ final class SensitiveParameterTest extends TestCase
             ExactValueDetector::class,
             'detect',
             'sensitiveValues',
+        ];
+
+        yield 'exact detector shared-context value' => [
+            ExactValueDetector::class,
+            'detectWithinContext',
+            'value',
+        ];
+
+        yield 'exact detector context' => [
+            ExactValueDetector::class,
+            'detectWithinContext',
+            'context',
         ];
 
         yield 'payment card detector input' => [
@@ -121,6 +142,18 @@ final class SensitiveParameterTest extends TestCase
             'sensitiveValues',
         ];
 
+        yield 'masker shared-context value' => [
+            SensitiveDataMasker::class,
+            'maskWithinContext',
+            'value',
+        ];
+
+        yield 'masker exact context' => [
+            SensitiveDataMasker::class,
+            'maskWithinContext',
+            'exactValueDetectionContext',
+        ];
+
         yield 'structured masker root value' => [
             StructuredDataMasker::class,
             'mask',
@@ -133,16 +166,28 @@ final class SensitiveParameterTest extends TestCase
             'sensitiveValues',
         ];
 
+        yield 'structured shared-context root value' => [
+            StructuredDataMasker::class,
+            'maskWithinContext',
+            'value',
+        ];
+
+        yield 'structured shared exact context' => [
+            StructuredDataMasker::class,
+            'maskWithinContext',
+            'exactValueDetectionContext',
+        ];
+
         yield 'structured masker recursive value' => [
             StructuredDataMasker::class,
             'maskValue',
             'value',
         ];
 
-        yield 'structured masker recursive explicit values' => [
+        yield 'structured recursive exact context' => [
             StructuredDataMasker::class,
             'maskValue',
-            'sensitiveValues',
+            'exactValueDetectionContext',
         ];
 
         yield 'structured array value' => [
@@ -151,10 +196,10 @@ final class SensitiveParameterTest extends TestCase
             'value',
         ];
 
-        yield 'structured array explicit values' => [
+        yield 'structured array exact context' => [
             StructuredDataMasker::class,
             'maskArray',
-            'sensitiveValues',
+            'exactValueDetectionContext',
         ];
 
         yield 'structured array key' => [
@@ -163,16 +208,10 @@ final class SensitiveParameterTest extends TestCase
             'key',
         ];
 
-        yield 'structured array key explicit values' => [
+        yield 'structured array-key exact context' => [
             StructuredDataMasker::class,
             'maskArrayKey',
-            'sensitiveValues',
-        ];
-
-        yield 'structured validation explicit values' => [
-            StructuredDataMasker::class,
-            'validateSensitiveValues',
-            'sensitiveValues',
+            'exactValueDetectionContext',
         ];
 
         yield 'sensitive logger message' => [

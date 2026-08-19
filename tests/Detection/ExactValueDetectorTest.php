@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masked\Bundle\Tests\Detection;
 
+use Masked\Bundle\Detection\ExactValueDetectionContext;
 use Masked\Bundle\Detection\ExactValueDetector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -92,6 +93,22 @@ final class ExactValueDetectorTest extends TestCase
         self::assertSame(4, $matches[0]->byteLength);
     }
 
+    public function testKeepsTouchingOccurrencesSeparate(): void
+    {
+        $matches = new ExactValueDetector()->detect(
+            'secretsecret',
+            ['secret'],
+        );
+
+        self::assertCount(2, $matches);
+
+        self::assertSame(0, $matches[0]->byteOffset);
+        self::assertSame(6, $matches[0]->byteLength);
+
+        self::assertSame(6, $matches[1]->byteOffset);
+        self::assertSame(6, $matches[1]->byteLength);
+    }
+
     public function testMatchingIsCaseSensitive(): void
     {
         self::assertSame(
@@ -117,7 +134,9 @@ final class ExactValueDetectorTest extends TestCase
 
     public function testRejectsEmptySensitiveValue(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(
+            \InvalidArgumentException::class,
+        );
         $this->expectExceptionMessage(
             'Sensitive values must not contain an empty string.',
         );
@@ -130,7 +149,9 @@ final class ExactValueDetectorTest extends TestCase
 
     public function testRejectsEmptySensitiveValueWhenInputIsEmpty(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(
+            \InvalidArgumentException::class,
+        );
         $this->expectExceptionMessage(
             'Sensitive values must not contain an empty string.',
         );
@@ -188,14 +209,8 @@ final class ExactValueDetectorTest extends TestCase
         );
     }
 
-    public function testFailsClosedWhenSearchBudgetIsExceeded(): void
+    public function testFailsClosedWhenSearchOperationBudgetIsExceeded(): void
     {
-        /*
-         * One-character matches are adjacent rather than overlapping, so this
-         * deliberately creates more search operations than the detector budget.
-         *
-         * Once the budget is exhausted the complete input must be protected.
-         */
         $value = str_repeat('x', 10001);
 
         $matches = new ExactValueDetector()->detect(
@@ -218,50 +233,56 @@ final class ExactValueDetectorTest extends TestCase
 
     public function testFailsClosedWhenTooManySensitiveValuesAreSupplied(): void
     {
-        $sensitiveValues = [];
-
-        for ($index = 0; $index < 1001; ++$index) {
-            $sensitiveValues[] = 'secret-'.$index;
-        }
-
         $value = 'Nothing sensitive here.';
 
         $matches = new ExactValueDetector()->detect(
             $value,
-            $sensitiveValues,
+            array_fill(
+                0,
+                1001,
+                'secret',
+            ),
         );
 
         self::assertCount(1, $matches);
         self::assertSame(0, $matches[0]->byteOffset);
+
         self::assertSame(
             strlen($value),
             $matches[0]->byteLength,
         );
     }
 
-    public function testFailsClosedWhenUniqueSensitiveValueBytesExceedBudget(): void
+    public function testFailsClosedWhenTotalSensitiveValueBytesExceedBudget(): void
     {
         $value = 'Nothing sensitive here.';
 
         $matches = new ExactValueDetector()->detect(
             $value,
             [
-                str_repeat('a', 600 * 1024),
-                str_repeat('b', 600 * 1024),
+                str_repeat(
+                    'a',
+                    1024 * 1024,
+                ),
+                'b',
             ],
         );
 
         self::assertCount(1, $matches);
         self::assertSame(0, $matches[0]->byteOffset);
+
         self::assertSame(
             strlen($value),
             $matches[0]->byteLength,
         );
     }
 
-    public function testDuplicateSensitiveValuesDoNotConsumeUniqueByteBudget(): void
+    public function testDuplicateValuesCanReachCountLimitWithinByteBudget(): void
     {
-        $sensitiveValue = str_repeat('s', 2048);
+        $sensitiveValue = str_repeat(
+            's',
+            1024,
+        );
 
         $matches = new ExactValueDetector()->detect(
             'prefix-'.$sensitiveValue,
@@ -274,6 +295,7 @@ final class ExactValueDetectorTest extends TestCase
 
         self::assertCount(1, $matches);
         self::assertSame(7, $matches[0]->byteOffset);
+
         self::assertSame(
             strlen($sensitiveValue),
             $matches[0]->byteLength,
@@ -282,14 +304,14 @@ final class ExactValueDetectorTest extends TestCase
 
     public function testFailsClosedWhenAggregateSearchWindowBudgetIsExceeded(): void
     {
-        $value = str_repeat('x', 1024 * 1024);
+        $value = str_repeat(
+            'x',
+            1024 * 1024,
+        );
 
-        $sensitiveValues = [];
-
-        for ($index = 0; $index < 65; ++$index) {
-            $sensitiveValues[] =
-                'non-matching-secret-'.$index;
-        }
+        $sensitiveValues = self::createNonMatchingSensitiveValues(
+            65,
+        );
 
         $matches = new ExactValueDetector()->detect(
             $value,
@@ -298,9 +320,75 @@ final class ExactValueDetectorTest extends TestCase
 
         self::assertCount(1, $matches);
         self::assertSame(0, $matches[0]->byteOffset);
+
         self::assertSame(
             strlen($value),
             $matches[0]->byteLength,
         );
+    }
+
+    public function testSearchWindowBudgetIsSharedAcrossDetectorCalls(): void
+    {
+        $detector = new ExactValueDetector();
+
+        $context = ExactValueDetectionContext::create(
+            self::createNonMatchingSensitiveValues(
+                64,
+            ),
+        );
+
+        $firstValue = str_repeat(
+            'x',
+            1024 * 1024,
+        );
+
+        self::assertSame(
+            [],
+            $detector->detectWithinContext(
+                $firstValue,
+                $context,
+            ),
+        );
+
+        self::assertFalse(
+            $context->isFailClosed(),
+        );
+
+        $secondValue = '0123456789';
+
+        $matches = $detector->detectWithinContext(
+            $secondValue,
+            $context,
+        );
+
+        self::assertTrue(
+            $context->isFailClosed(),
+        );
+
+        self::assertCount(1, $matches);
+        self::assertSame(0, $matches[0]->byteOffset);
+
+        self::assertSame(
+            strlen($secondValue),
+            $matches[0]->byteLength,
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function createNonMatchingSensitiveValues(
+        int $count,
+    ): array {
+        $sensitiveValues = [];
+
+        for ($index = 0; $index < $count; ++$index) {
+            $sensitiveValues[] = sprintf(
+                'secret-%02d',
+                $index,
+            );
+        }
+
+        return $sensitiveValues;
     }
 }
