@@ -192,10 +192,6 @@ Candidates:
 - must not consist of one repeated digit.
 
 Payment-card candidates are scanned incrementally without materializing all
-numeric sequences or digit groups in memory. Candidate validation is bounded;
-If continuing the scan would exceed a search budget, the complete input is 
-treated as sensitive.
-Payment-card candidates are scanned incrementally without materializing all
 numeric sequences or digit groups in memory. Candidate validation is limited
 to 10,000 checks per masking operation.
 
