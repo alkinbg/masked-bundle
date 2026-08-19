@@ -143,9 +143,9 @@ static or mutable secret registry.
 Automatic detection and explicit sensitive values can be used together in the
 same call.
 
-Exact-value detection uses bounded search budgets for pathological inputs. If continuing the scan would 
-exceed a search budget while scanning a string, that current string is
-treated as sensitive rather than returning a partially scanned value.
+Exact-value detection uses bounded search budgets for pathological inputs. 
+If continuing the scan would exceed a search budget while scanning a string, 
+that current string is treated as sensitive rather than returning a partially scanned value.
 
 Explicit-value detection accepts at most 1,000 supplied values and at most
 1 MiB of supplied sensitive-value data per operation, including duplicates.
