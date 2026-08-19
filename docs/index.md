@@ -195,6 +195,18 @@ Payment-card candidates are scanned incrementally without materializing all
 numeric sequences or digit groups in memory. Candidate validation is bounded;
 If continuing the scan would exceed a search budget, the complete input is 
 treated as sensitive.
+Payment-card candidates are scanned incrementally without materializing all
+numeric sequences or digit groups in memory. Candidate validation is limited
+to 10,000 checks per masking operation.
+
+Each call to `SensitiveDataMasker::mask()` starts a fresh candidate-validation
+budget. `StructuredDataMasker` shares one budget across all supported scalar
+values and array keys in the complete traversal. `SensitiveLogger` shares one
+budget between the log message and structured context.
+
+If the budget is exhausted, the complete current input is treated as sensitive.
+The same fail-closed state applies to later supported scalar values and array
+keys processed by the same structured masking or sensitive logging operation.
 
 The detector can find multiple payment-card numbers in the same string and is
 safe with multibyte surrounding text.
@@ -235,6 +247,8 @@ final class AuthenticationService
 
 The message and supported structured context values are masked before the
 record is delegated to the underlying PSR-3 logger.
+The message and context share the same exact-value search budgets and
+payment-card candidate-validation budget.
 
 ## Monolog integration
 

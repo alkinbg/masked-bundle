@@ -222,8 +222,17 @@ Currently it:
 - operates safely when surrounding text contains multibyte characters.
 
 Payment-card candidates are scanned incrementally without materializing all
-numeric sequences or digit groups in memory. Candidate validation is bounded;
-if the safety budget is exhausted, the complete input is treated as sensitive.
+numeric sequences or digit groups in memory. Candidate validation is limited
+to 10,000 checks per masking operation.
+
+Each call to `SensitiveDataMasker::mask()` starts a fresh candidate-validation
+budget. `StructuredDataMasker` shares one budget across all supported scalar
+values and array keys in the complete traversal. `SensitiveLogger` shares one
+budget between the log message and structured context.
+
+If the budget is exhausted, the complete current input is treated as sensitive.
+The same fail-closed state applies to later supported scalar values and array
+keys processed by the same structured masking or sensitive logging operation.
 
 The 13–19 digit range is a detector boundary, not a claim that it represents
 every payment-card identifier permitted by every payment-card standard.
@@ -273,6 +282,9 @@ modified.
 
 Automatic detection is also applied, so explicitly supplied secrets and
 detectable payment-card numbers can be protected in the same log operation.
+
+The payment-card candidate-validation budget is shared between the log message
+and structured context. It is not restarted separately for each context value.
 
 Arbitrary objects inside the context are intentionally preserved. Object
 serialization remains the responsibility of downstream processors and
