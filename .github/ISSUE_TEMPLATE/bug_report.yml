@@ -1,0 +1,95 @@
+name: Bug report
+description: Report a reproducible problem in MaskedBundle
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem.
+
+        Do not include real passwords, API tokens, credentials, personal data,
+        production logs, or real payment-card information.
+
+        Security vulnerabilities must be reported privately according to
+        SECURITY.md rather than through a public issue.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched existing issues and did not find the same problem.
+          required: true
+        - label: I have not included real sensitive or production data.
+          required: true
+        - label: This is not a security vulnerability requiring private disclosure.
+          required: true
+
+  - type: input
+    id: masked-bundle-version
+    attributes:
+      label: MaskedBundle version
+      description: Include the installed release or commit.
+      placeholder: "v0.1.2"
+    validations:
+      required: true
+
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: "8.4.1"
+    validations:
+      required: true
+
+  - type: input
+    id: symfony-version
+    attributes:
+      label: Symfony version
+      placeholder: "8.1.x"
+    validations:
+      required: true
+
+  - type: input
+    id: monolog-version
+    attributes:
+      label: Monolog version
+      description: Leave empty if the problem does not involve Monolog.
+      placeholder: "3.x"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem description
+      description: Describe the problem clearly and concisely.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Provide the smallest reproducible example using synthetic data only.
+      render: php
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other non-sensitive information that may help.
