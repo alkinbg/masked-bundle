@@ -1,5 +1,8 @@
 # MaskedBundle
-
+[![CI](https://github.com/alkinbg/masked-bundle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/alkinbg/masked-bundle/actions/workflows/ci.yml)
+![PHP](https://img.shields.io/badge/PHP-8.4.1%2B-777BB4?logo=php&logoColor=white)
+![Symfony](https://img.shields.io/badge/Symfony-8.1%2B-000000?logo=symfony&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green)
 Sensitive data detection and masking for Symfony applications.
 
 MaskedBundle provides reusable masking services for Symfony applications and
