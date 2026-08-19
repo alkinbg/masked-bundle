@@ -119,6 +119,62 @@ final class SensitiveJsonFormatterTest extends TestCase
         );
     }
 
+    public function testMasksSensitiveDataDuringReentrantStringableNormalization(): void
+    {
+        $formatter = $this->createFormatter();
+
+        $stringable = new class($formatter) implements \Stringable {
+            public ?string $nestedOutput = null;
+
+            public function __construct(
+                private readonly SensitiveJsonFormatter $formatter,
+            ) {
+            }
+
+            public function __toString(): string
+            {
+                $this->nestedOutput = $this->formatter->format(
+                    new LogRecord(
+                        datetime: new \DateTimeImmutable(
+                            '2026-08-18T00:00:00+00:00',
+                        ),
+                        channel: 'app',
+                        level: Level::Info,
+                        message: 'Nested card 4111111111111111',
+                    ),
+                );
+
+                return 'stringable-value';
+            }
+        };
+
+        $formatter->format(
+            new LogRecord(
+                datetime: new \DateTimeImmutable(
+                    '2026-08-18T00:00:00+00:00',
+                ),
+                channel: 'app',
+                level: Level::Info,
+                message: 'Outer log',
+                context: [
+                    'value' => $stringable,
+                ],
+            ),
+        );
+
+        self::assertNotNull($stringable->nestedOutput);
+
+        self::assertStringNotContainsString(
+            '4111111111111111',
+            $stringable->nestedOutput,
+        );
+
+        self::assertStringContainsString(
+            str_repeat('█', 16),
+            $stringable->nestedOutput,
+        );
+    }
+
     public function testUsesConfiguredMaskCharacter(): void
     {
         $exception = new \RuntimeException(

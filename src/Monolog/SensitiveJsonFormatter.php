@@ -27,8 +27,6 @@ final class SensitiveJsonFormatter extends JsonFormatter
 
     private ?int $remainingMaskingItems = null;
 
-    private int $normalizationCallDepth = 0;
-
     public function __construct(
         private readonly StructuredDataMasker $structuredDataMasker,
         int $batchMode = self::BATCH_MODE_JSON,
@@ -91,19 +89,13 @@ final class SensitiveJsonFormatter extends JsonFormatter
         int $depth = 0,
     ): mixed {
         $startedMaskingOperation = $this->startMaskingOperation();
-        $isRootNormalization = 0 === $this->normalizationCallDepth;
-
-        ++$this->normalizationCallDepth;
+        $isRootNormalization = 0 === $depth;
 
         try {
-            try {
-                $normalized = parent::normalize(
-                    $data,
-                    $depth,
-                );
-            } finally {
-                --$this->normalizationCallDepth;
-            }
+            $normalized = parent::normalize(
+                $data,
+                $depth,
+            );
 
             if (!$isRootNormalization) {
                 return $normalized;
@@ -409,7 +401,6 @@ final class SensitiveJsonFormatter extends JsonFormatter
     private function finishMaskingOperation(): void
     {
         $this->remainingMaskingItems = null;
-        $this->normalizationCallDepth = 0;
     }
 
     private function consumeMaskingItem(): bool
