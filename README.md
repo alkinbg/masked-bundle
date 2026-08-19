@@ -4,8 +4,8 @@
 ![PHP](https://img.shields.io/badge/PHP-8.4.1%2B-777BB4?logo=php&logoColor=white)
 ![Symfony](https://img.shields.io/badge/Symfony-8.1%2B-000000?logo=symfony&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
-[![Latest Stable Version](https://poser.pugx.org/alkinbg/masked-bundle/v/stable)](https://packagist.org/packages/alkinbg/masked-bundle)
-[![Total Downloads](https://poser.pugx.org/alkinbg/masked-bundle/downloads)](https://packagist.org/packages/alkinbg/masked-bundle)
+[![Latest Stable Version](https://img.shields.io/packagist/v/alkinbg/masked-bundle?logo=packagist)](https://packagist.org/packages/alkinbg/masked-bundle)
+[![Total Downloads](https://img.shields.io/packagist/dt/alkinbg/masked-bundle?logo=packagist)](https://packagist.org/packages/alkinbg/masked-bundle)
 
 Sensitive data detection and masking for Symfony applications.
 
